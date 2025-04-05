@@ -115,7 +115,7 @@ In the case of a text message:
 In the case of a speed change command message:
 
 ```
-<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <Cmd> <Speed_index)> <NULL-terminator>
+<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <Cmd> <Speed_index> <NULL-terminator>
                                                                   |_ CMD_SPEED_CHG
 ```
 
