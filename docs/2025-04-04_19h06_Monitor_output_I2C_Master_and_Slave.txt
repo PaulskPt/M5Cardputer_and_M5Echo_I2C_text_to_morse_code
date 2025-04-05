@@ -54,14 +54,14 @@ handle_kbd_input(): data = > g
 handle_kbd_input(): <ctrl> active + 'g' pressed
 send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14386, msgType = CMD_MESSAGE, cmd = CMD_MORSE_GO 
 send_cmd(): length of message = 6
-send_cmd(): Going to send command message: 0x55, 0x38, 0x32, 0xfc, 0xca, 
+send_cmd(): Going to send command message: 0x55, 0x38, 0x32, 0xfc, 0xca, 0x00
 send_cmd(): command message sent. Number of bytes sent: 6                                        <<<=== CMD type msg MORSE_GO sent
 handle_kbd_input(): <ctrl> pressed
 handle_kbd_input(): data = > e
 handle_kbd_input(): <ctrl> active + 'e' pressed
 send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14387, msgType = CMD_MESSAGE, cmd = CMD_MORSE_END
 send_cmd(): length of message = 6
-send_cmd(): Going to send command message: 0x55, 0x38, 0x33, 0xfc, 0xcb, 
+send_cmd(): Going to send command message: 0x55, 0x38, 0x33, 0xfc, 0xcb, 0x00
 send_cmd(): command message sent. Number of bytes sent: 6                                        <<<=== CMD type msg MORSE_END sent
 
 -----------------------------------------------------------------------------------------------------
