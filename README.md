@@ -270,6 +270,32 @@ always end the text with a "space character" (|__|) (key on the right, below the
 like in the default "paris ". The sketch will also add an end-of-message/text marker: '\0'. 
 The sketch of the slave uses various for (...) loops which check for the '\0' NULL terminator.
 
+In the case, during the sending of the default text "paris ", when a command message containing the command
+"CMD_MORSE_END", the follwing will be visual in the Serial Monitor output:
+
+```
+send_morse(): going to send 'paris ', length = 6
+send_morse(): contents cw_buffer = "paris "
+Values for dly1, dly3 and dly7:
+dly1: 50, dly3: 150, dly7: 350 mSeconds
+ 1) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 2) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 3) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 4) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14387
+handle_rx(): type of message: CMD_MESSAGE
+handle_rx(): type of command: CMD_MORSE_END
+
+send_morse(): CMD morse end recived. Exiting function.
+```
+
+
 FLASHING NOTE
 
 If you use the Arduino IDE v2 take note of my recent experience. A few days ago, when starting up the Arduino IDE v2.3.4,
