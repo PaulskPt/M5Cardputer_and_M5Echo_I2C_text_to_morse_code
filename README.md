@@ -358,7 +358,7 @@ Links to product accessories of the hardwar used:
 
 Known Issues:
 
-The current software on the master and the slave devices runs OK. ToDo: investigate how the command impulses can changes in such a way that the
+The current software on the master and the slave devices runs OK. ToDo: investigate how the audio impulses can be changed in such a way that the
 resulting audio of the morse code does appear less "staccato" (rigid).
 In the morse code test version I experienced that setting ```tone_dot.time_ms``` to uneven decimal values, for example: 90, 110, 130,
 caused the tone for the dash to sound garbled. Also the tone of the ```push button``` on the M5Echo sounded garbled alike. That is why I
