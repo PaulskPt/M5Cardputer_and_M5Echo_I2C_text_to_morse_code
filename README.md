@@ -33,7 +33,6 @@ In the ```src``` folder are two subfolders: "master", containing the software to
 
 Hardware used:
 
-In the one device setup version:
 ```
   1) M5Stack M5Cardputer;
   2) M5Stack M5Echo;
