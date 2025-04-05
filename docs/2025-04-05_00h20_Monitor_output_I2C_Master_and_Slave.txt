@@ -44,7 +44,7 @@ handle_kbd_input(): data = > r
 handle_kbd_input(): <ctrl> active + 'r' pressed
 send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14386, msgType = CMD_MESSAGE, cmd = CMD_RESET
 send_cmd(): length of message = 6
-send_cmd(): Going to send command message: 0x55, 0x38, 0x32, 0xfc, 0xc9, 
+send_cmd(): Going to send command message: 0x55, 0x38, 0x32, 0xfc, 0xc9, 0x00
 send_cmd(): command message sent. Number of bytes sent: 6
 
 -----------------------------------------------------------------------------------------------------
