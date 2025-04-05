@@ -61,15 +61,15 @@ The only messages that contain data are:
 Upon reception the I2C slave device, the M5Echo, will be check for correct addressing, msgType and contents. In the case of a text message, the M5Echo will translate the received text into morse code, then produces the
 morse code audio through its loudspeaker. In this moment there are the following types of commands for the M5Echo:
 
-```
-  d) CMD_DO_NOTHING; (in this moment serving as a base value (200) to calculate an index to the list of commands);
-  e) CMD_RESET (if necessary this command can be used to instruct the slave to execute a software reset (ESP.restart())).
-  f) CMD_MORSE_GO (to instruct the M5Echo to start sending a default text "paris ", in morse code used to measure the speed of the morse code);
-  g) CMD_MORSE_END (to instruct the M5Echo to end an ongoing sending of morse code. This can be in the case of the default text "paris " or
+
+  -  CMD_DO_NOTHING; (in this moment serving as a base value (200) to calculate an index to the list of commands);
+  -  CMD_RESET (if necessary this command can be used to instruct the slave to execute a software reset (ESP.restart())).
+  -  CMD_MORSE_GO (to instruct the M5Echo to start sending a default text "paris ", in morse code used to measure the speed of the morse code);
+  -  CMD_MORSE_END (to instruct the M5Echo to end an ongoing sending of morse code. This can be in the case of the default text "paris " or
      another text received from the master device).
-  h) CMD_SPEED_CHG, morse speed change;
-  i) TEXT_MESSAGE, a message containing text (to be translated into morse code).
-```
+  -  CMD_SPEED_CHG, morse speed change;
+  -  TEXT_MESSAGE, a message containing text (to be translated into morse code).
+
 
 OTHER COMMANDS:
 
@@ -105,21 +105,21 @@ subfolers "master" and "slave".
 
 MESSAGE CONSTRUCTION : 
 
-h) in the case of a text message:
+In the case of a text message:
 
 ```
 <7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <Cmd> <Text (data)> <NULL-terminator>
                                                                   |_ TEXT_MESSAGE
 ```
 
-i) in the case of a speed change command message:
+In the case of a speed change command message:
 
 ```
 <7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <Cmd> <Speed_index)> <NULL-terminator>
                                                                   |_ CMD_SPEED_CHG
 ```
 
-i) in the case of a command message:
+In the case of a command message:
 
 ```
 <7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <Cmd> <Data> <NULL-terminator>
@@ -209,7 +209,7 @@ The second buffer is "cw_buffer". After every reception of a message packet via 
 will receive a copy of the contents of the rx_buffer. Why? I have chosen for this option because,
 when the M5Echo is sending the morse code text, at every loop of inside the function send_morse(),
 the I2C will be polled. If there are bytes available for reception, the rx_buffer will be filled
-with the new message packet. This new message can be a CMD_MESSAGE msgType. In that case the 
+with the new message packet. This new message can be a message containing a command. In that case the 
 sketch (after the I2C polling returning into the send_morse() function, will execute the command
 received, for instance: CMD_MORSE_END. In this case the ongoing sending of morse code will be
 ended). When othere types of messages are received they will be ignored in that moment. The
