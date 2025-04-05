@@ -59,7 +59,7 @@ The only messages that contain data are:
 - the TEXT_MESSAGE (a message containing text as data).
 
 Upon reception the I2C slave device, the M5Echo, will be check for correct addressing, msgType and contents. In the case of a text message, the M5Echo will translate the received text into morse code, then produces the
-morse code audio through its loudspeaker. In this moment there are four types of commands for the M5Echo:
+morse code audio through its loudspeaker. In this moment there are the following types of commands for the M5Echo:
 
 ```
   d) CMD_DO_NOTHING; (in this moment serving as a base value (200) to calculate an index to the list of commands);
@@ -67,6 +67,8 @@ morse code audio through its loudspeaker. In this moment there are four types of
   f) CMD_MORSE_GO (to instruct the M5Echo to start sending a default text "paris ", in morse code used to measure the speed of the morse code);
   g) CMD_MORSE_END (to instruct the M5Echo to end an ongoing sending of morse code. This can be in the case of the default text "paris " or
      another text received from the master device).
+  h) CMD_SPEED_CHG, morse speed change;
+  i) TEXT_MESSAGE, a message containing text (to be translated into morse code).
 ```
 
 OTHER COMMANDS:
