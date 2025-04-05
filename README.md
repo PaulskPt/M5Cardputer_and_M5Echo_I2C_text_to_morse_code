@@ -138,7 +138,7 @@ the list of COMMANDS above ({c, i, d, r, s, g, e}). After pressing these two key
 will interprete and handle the command given. If it is a command for the M5Echo the M5Cardputer will immediately
 send a command type of message, containing the command you entered, to the M5Echo. My experience is that this goes
 very rapid. On the oscillographs one can see that an I2C command type of message only contains 6 bytes.
-Sending this command message packet takes only 13 x 50 = 650 microseconds! (see the oscillographs)
+Sending this command message packet takes only 13 x 50 = 650 microseconds! (see the oscillographs).
 
 After a reset the following text will be shown on the Serial Monitor output of the M5Cardputer:
 
