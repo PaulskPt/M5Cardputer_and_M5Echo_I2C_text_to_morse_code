@@ -13,7 +13,8 @@ Now, 63 years later, the profession of wireless operator doesn't exist anymore. 
 the sparks disappeared from the military navy ships as well as from the merchant navy ships. However, morse code is still in use by radio-hobbyists, known as: "hamradio operators". I am one of them. For more info see: [morse code](https://en.wikipedia.org/wiki/Morse_code).
 Since a decade I also experiment with microcontrollers. Recently, I came to the idea to create a small project in which a microcontroller generates morse code. 
 
-PURPOSE: 
+PURPOSE:
+
 Use an M5Stack M5Cardputer to create and send I2C messages (packets) to an M5Stack M5Echo.
 The M5Echo after interprating the received message, in the case of reception of a text message,
 will translate the received text into morse code and make the code audible through the builtin loudspeaker.
