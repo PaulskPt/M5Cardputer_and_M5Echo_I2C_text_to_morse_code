@@ -17,7 +17,17 @@
 * For an Arduino example of sending text via I2C, see:
 * https://forum.arduino.cc/t/send-text-string-over-i2c-between-two-arduinos/326052/5
 *
+* IDE: Arduino v2.3.5. Inside the Arduino IDE > Tools > Board chosen: M5Cardputer
+*
+* Updates 2025-04-02:
+* Send command messages, e.g.: 
+* a) to start or stop sending texts: free texts sent from this device (master) to the slave device,
+* or in the slave device pre-programmed fixed speed test morse text 'paris ';
+* b) to send command messages to increase or decrease the speed of the morse code send by the slave device;
+* c) to send a command message CMD_RESET, to remotely order the slave device to execute a software reset (ESP.restart()).
+*
 */
+
 /**
  * @file inputText.ino
  * @author SeanKwok (shaoxiang@m5stack.com)
@@ -38,11 +48,10 @@
 #include <Arduino.h>
 #include "pins_arduino.h"
 #include "Wire.h"  // Leave this include line at this position, before the ones below! Otherwise compile error will occur!
-//#include "M5Unified.h" // "I2C_Class.hpp"
 #include <M5Cardputer.h>
 #include <M5GFX.h>
 #include "puter_echo.h"
-//#include "keyboard/keyboard.h"
+
 
 
 // #define USE_M5STACK_EXAMPLE  // see handle_rx()
@@ -51,14 +60,8 @@
 #define ARDUINO_M5STACK_CARDPUTER
 #endif
 
-/// for external I2C device (Port.A)
-//I2C_Class &Ex_I2C = m5::Ex_I2C;
-
 #define I2C_DEV_ADDR    0x55
-// #define I2C_MASTER_ADDR 0x70
-//#define I2C_SLAVE_ADDR  0x75
-//int I2C_Master_addr = 0x48; // I2C address of the master device (M5Cardputer)
-//int I2C_Slave_addr = 0x50;  // I2C address of the slave device (M5Echo)
+
 uint32_t TXpacketNr = 14385; // = 0x3830 (for test in send_speed_chg() )
 uint32_t RXpacketNr = 0;
 
@@ -98,16 +101,18 @@ M5Canvas canvas(&M5Cardputer.Display);
 String data = "> ";
 size_t rx_bufferSize = 128;
 uint8_t *rx_buffer;
-
 uint8_t rx_buffer_howMany = 0;
-bool use_speaker = true;
+bool use_speaker = false;
 bool receiveFlag = false;
 bool ack_rcvd = false;
-
+bool show_commands_flag = false;
 bool ctrl_pressed = false;
+bool morse_go_flag = true;
+bool morse_end_flag = false;
+bool key_reset_flag = false;
 bool decrease_pressed = false;
 bool increase_pressed = false;
- int8_t speed_idx = 3;  // default morse speed for M5Echo
+int8_t speed_idx = 3;  // default morse speed for M5Echo
 
 unsigned long start_t = millis();
 unsigned long curr_t = 0;
@@ -140,7 +145,7 @@ void onRequest() {
 
 void onReceive(int howMany) {
   //Wire.readBytes(buffer, howMany);
-  rx_buffer_howMany = howMany;
+  rx_buffer_howMany = static_cast<int8_t>(howMany);
   receiveFlag = true;
 }
 
@@ -151,10 +156,12 @@ void ack_cb() {
 #endif
 
 void beep() {
-  //M5Cardputer.Speaker.tone(1200, 100);
-  //delay(100);
-  M5Cardputer.Speaker.tone(1400, 100);
-  delay(100);
+  if (use_speaker) {
+    //M5Cardputer.Speaker.tone(1200, 100);
+    //delay(100);
+    M5Cardputer.Speaker.tone(1400, 100);
+    delay(100);
+  }
 }
 
 void setup() {
@@ -170,8 +177,8 @@ void setup() {
     "and ",                           // 5
     "speed change commands",          // 6
     "to a M5Stack Atom Echo device.", // 7
-    "successfull.",                  // 8
-    "failed."                        // 9
+    "successfull.",                   // 8
+    "failed."                         // 9
   };
   auto cfg = M5.config();
   // See: https://github.com/geo-tp/M5-Card-Computer-I2C-Scanner/blob/main/src/main.cpp
@@ -260,24 +267,79 @@ void setup() {
     Serial.printf("%d.\n", i2c_bus_num);
     // I2C_ScannerWire();
   }
+  disp_main_screen();
+}
 
+void wait_for_keypress() {
+  while (true) {
+    M5Cardputer.update();
+    if (M5Cardputer.Keyboard.isChange()) {
+      if (M5Cardputer.Keyboard.isPressed())
+        return;
+    }
+  }
+}
+
+float dispTextSizeSmall = 0.5;
+float dispTextSize      = 1.0;
+
+void disp_main_screen() {
+  static constexpr const char *txts[] PROGMEM = {"Input: ", "<Key> +", "<Enter>"};
+  M5Cardputer.Display.clear();
   M5Cardputer.Display.setRotation(1);
-  M5Cardputer.Display.setTextSize(0.5);
+  M5Cardputer.Display.setTextSize(dispTextSize);
+
+  //canvas.setTextFont(&fonts::FreeSerifBoldItalic18pt7b);
+  canvas.setTextFont(&fonts::FreeMonoBold18pt7b);
+  canvas.setTextSize(dispTextSize);
+  canvas.createSprite(M5Cardputer.Display.width() - 4,
+                      M5Cardputer.Display.height() - 4);
+  canvas.setTextScroll(true);
   M5Cardputer.Display.drawRect(0, 0, M5Cardputer.Display.width(),
                               M5Cardputer.Display.height() - 28, GREEN);
-  M5Cardputer.Display.setTextFont(&fonts::FreeSerifBoldItalic18pt7b);
+  //M5Cardputer.Display.setTextFont(&fonts::FreeSerifBoldItalic18pt7b);
+  M5Cardputer.Display.setTextFont(&fonts::FreeMonoBold18pt7b);
 
   M5Cardputer.Display.fillRect(0, M5Cardputer.Display.height() - 4,
                               M5Cardputer.Display.width(), 4, GREEN);
 
-  canvas.setTextFont(&fonts::FreeSerifBoldItalic18pt7b);
-  canvas.setTextSize(0.5);
+  //canvas.setTextFont(&fonts::FreeSerifBoldItalic18pt7b);
+  canvas.setTextFont(&fonts::FreeMonoBold18pt7b);
+  //canvas.setTextSize(0.5);
   canvas.createSprite(M5Cardputer.Display.width() - 8,
                       M5Cardputer.Display.height() - 36);
-  canvas.setTextScroll(true);
-  canvas.println("Press Key and Enter to Input Text");
+  //canvas.setTextScroll(true);
+  //canvas.println(txt1);
   canvas.pushSprite(4, 4);
+  M5Cardputer.Display.drawString(txts[0], 4,  4);
+  M5Cardputer.Display.drawString(txts[1], 4, 34);
+  M5Cardputer.Display.drawString(txts[2], 4, 64);
+
+  data = "> ";
   M5Cardputer.Display.drawString(data, 4, M5Cardputer.Display.height() - 24);
+
+}
+
+void disp_commands() {
+  M5Cardputer.Display.clear();
+  //canvas.setTextFont(&fonts::FreeSerifBoldItalic18pt7b);
+  canvas.setTextFont(&fonts::FreeMonoBold18pt7b);
+  canvas.setTextSize(dispTextSizeSmall);
+  canvas.createSprite(M5Cardputer.Display.width() - 4,
+                      M5Cardputer.Display.height() - 4);
+  canvas.setTextScroll(true);
+  canvas.println("--- COMMANDS: CTRL+ ---");
+  canvas.println(" i  incr speed");
+  canvas.println(" d  decr speed");
+  //canvas.pushSprite(4, 4);
+  //wait_for_keypress();
+  canvas.println(" r  reset device");
+  canvas.println(" s  snd on/off");
+  canvas.println(" g  morse go");
+  canvas.println(" e  morse end");
+  canvas.pushSprite(4, 4);
+  wait_for_keypress();
+  //M5Cardputer.Display.clear();
 }
 
 void send_text_msg() {
@@ -333,8 +395,11 @@ void send_text_msg() {
   // where .* lets you specify the length dynamically.
   Serial.print(txt0);
   Serial.println("Message contents:");
-  Serial.printf("\tI2C_DEV_ADDR = 0x%02x,\n\tTXpacketNr     = %u,\n\tmsgType      = %s,\n\ttext         = \"%.*s\"\n",
-    I2C_DEV_ADDR, 
+  Serial.printf("\tI2C_DEV_ADDR = 0x%02x, \
+               \n\tTXpacketNr   = %u, \
+               \n\tmsgType      = %s, \
+               \n\ttext         = \"%.*s\" (+ \'\\0\')\n", \
+    message[0], 
     (message[1] << 8) | message[2], 
     s,
     le_data, 
@@ -344,31 +409,14 @@ void send_text_msg() {
   Serial.print(txt0);
   Serial.print(F("length of packet to send = "));
   Serial.println(le_packet);
-
-  //Serial.print(txt0);
-  //Serial.printf("%s%s%s%s: ", txts[6], txts[7], txts[1], txts[2]);
-  /*
-  for (i = 0; i < 3; i++) {
-    Serial.print(message[i], HEX);
-    Serial.print(", ");
-  }
-  uint8_t c;
-  for (i = 4; message[i] != '\0'; i++) {
-    c = static_cast<char>(message[i]);
-    Serial.printf("%s", c);
-    if (c != '\0')
-      Serial.print(", ");
-  }
-  Serial.println();
-
   Serial.print(txt0);
   Serial.println(F("message in bytes: "));
-  uint8_t le3 = sizeof(message);
-  for (i = 0; i < le3; i++) {
-    Serial.printf("0x%02d ", message[i]);
+  //uint8_t le3 = sizeof(message);
+  for (i = 0; i < le_packet; i++) {
+    Serial.printf("0x%02x ", message[i]);
   }
   Serial.println();
-  */
+  
   size_t bytes_sent = 0;
   Wire.beginTransmission(I2C_DEV_ADDR);
   bytes_sent = Wire.write((uint8_t *)message, le_packet);
@@ -387,6 +435,105 @@ void send_text_msg() {
   }
   //free(message);
  }
+
+ void send_cmd(int8_t cmd_idx) {
+  static constexpr const char txt0[] PROGMEM = "send_cmd(): ";
+  static constexpr const char *txts[] PROGMEM = {
+    "sending ",       // 0
+    "command ",       // 1
+    "message",        // 2
+    "bytes ",         // 3
+    "sent",           // 4
+    "Number of ",     // 5
+    "Going to ",      // 6
+    "send "           // 7
+  };
+  TXpacketNr++;
+  uint8_t le_cmd_msg;
+  uint8_t le_message;
+  uint8_t *message;
+  uint8_t message_bufferSize = 6;
+
+  message = NULL;
+  message = (uint8_t *)malloc(message_bufferSize);
+  if (message == NULL) {
+    Serial.print(txt0);
+    Serial.println(F("Can't allocate memory for cmd msg"));
+    return;
+  }
+
+  message[0] = I2C_DEV_ADDR;
+  message[1] = (TXpacketNr & 0xFF00) >> 8; // put MSB of uint16_t
+  message[2] = TXpacketNr & 0xFF; // put LSB of uint16_t
+  message[3] = CMD_MESSAGE;
+  message[4] = cmd_idx;
+  message[5] = '\0';
+  le_message=6; // was: =sizeof(message)/sizeof(message[0]) + 1;
+
+  String s1;
+  switch (message[3]) {
+    case CMD_MESSAGE:
+      s1 = "CMD_MESSAGE";
+      break;
+    case TEXT_MESSAGE:
+      s1 = "TEXT_MESSAGE";
+      break;
+    case SPEED_CHG:
+      s1 = "SPEED_CHG";
+      break;
+  }
+
+  String s2;
+  switch (message[4]) {
+    case CMD_DO_NOTHING:
+      s2 = "CMD_DO_NOTHING";
+      break;
+    case CMD_RESET:
+      s2 = "CMD_RESET";
+      break;
+    case CMD_MORSE_GO:
+      s2 = "CMD_MORSE_GO";
+      break;
+    case CMD_MORSE_END:
+      s2 = "CMD_MORSE_END";
+      break;
+  }
+  
+  Serial.print(txt0);
+  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, msgType = %s, cmd = %s\n", 
+              message[0], 
+              (message[1] << 8) | message[2], 
+              s1,
+              s2);
+
+  Serial.print(txt0);
+  Serial.print(F("length of message = "));
+  Serial.printf("%d\n", le_message);
+
+  Serial.print(txt0);
+  Serial.printf("%s%s%s%s: ", txts[6], txts[7], txts[1], txts[2]);
+  for (uint8_t i = 0; message[i] != '\0'; i++) {
+    Serial.printf("0x%02x", message[i]);
+    if (i < le_message-1)
+      Serial.print(", ");
+  }
+  Serial.println();
+  size_t bytes_sent = 0;
+  Wire.beginTransmission(I2C_DEV_ADDR);
+  bytes_sent = Wire.write((uint8_t *)message, le_message);
+  Wire.endTransmission(true);
+  Serial.print(txt0);
+  if (bytes_sent > 0) {
+    Serial.printf("%s%s %s. %s%s%s: %d\n",
+      txts[1], txts[2], txts[4],
+      txts[5], txts[3], txts[4],
+      bytes_sent);
+  } else {
+    Serial.printf("%s%s%s", txts[0], txts[1], txts[2]);
+    Serial.println(F(" to slave failed."));
+  }
+  free(message);
+}
 
 void send_speed_chg(int8_t speed_idx) {
   static constexpr const char txt0[] PROGMEM = "send_speed_chg(): ";
@@ -521,97 +668,23 @@ bool send(String txt) {
   }
 }
 
-/*
-void send_to_M5Echo() {
-  static constexpr const char txt0[] PROGMEM = "send_to_M5Echo(): ";
-  static constexpr const char *txts[] PROGMEM = {
-    "sending text ",
-    "success ",
-    "failed ",
-    "nr of tries"
-  };
-
-  //bool ret = false;
-  bool resend = false;
-  bool stop = false;
-  int fail_cnt = 0;
-  size_t le = data.length();
-  uint8_t nr_of_tries = 0;
-  uint8_t max_nr_of_tries = 5;
-  if (le > 0) {
-    Serial.print(txt0);
-    Serial.print(F("Going to send to M5Echo: "));
-    Serial.printf("\"%s\"\n", data);
-    send(data);
-    if (!ack_rcvd) {  // When not received an acknowledge
-      start_t = millis();
-      for (int i = 0; i < le; i++) {
-        while (nr_of_tries < max_nr_of_tries) {
-          send(data);
-          if (ack_rcvd == true) {
-            stop = true;
-            break;
-          }
-          curr_t = millis();
-          elapsed_t = curr_t - start_t;
-          if (elapsed_t > timeout_limit_t ) {
-            Serial.print(txt0);
-            Serial.print(txts[0]);
-            Serial.print(txts[1]);
-            Serial.printf("\"%s\". Elapsed time: %lu\n", data, elapsed_t);
-            stop = true;
-            break;
-          }
-          nr_of_tries++;
-        }
-
-        size_t len = strlen(txts[0]) + strlen((ack_rcvd == false)? txts[1] : txts[2]) + 1; // +1 for null terminator    
-        // Allocate memory for the new string
-        char* concatenated = new char[len];
-        // Copy and concatenate the strings
-        strcpy(concatenated, txts[0]);
-        strcat(concatenated, (ack_rcvd == false) ? txts[1] : txts[2]);
-        disp_text(concatenated);
-        Serial.print(txt0);
-        Serial.println(concatenated);
-        // Free the allocated memory
-        delete[] concatenated;
-      
-        if (stop)
-          break;
-      }
-    }
-    else 
-      ack_rcvd = false; // reset flag
-    //
-    //if (stop == false) {
-    //  char tmp[1] = {'\0'};
-    //  char *tmpStr = tmp; // create a pointer to array tmp
-    //  send(tmpStr);
-    //}
-  }
-  else
-    receiveFlag = false;
-  // return ret;
+void cleanup() {
+  //freeRxBuffer();
+  ack_rcvd = false;
+  ctrl_pressed = false;
+  decrease_pressed = false;
+  increase_pressed = false;
+  morse_go_flag = false;
+  morse_end_flag = false;
+  key_reset_flag = false;
+  receiveFlag = false;
+  show_commands_flag = false;
+  use_speaker = false;
+  speed_idx = 3;
 }
-*/
 
-// For a very util source for the Cardputer see:
-// https://cardputer.free.nf/class_keyboard___class.html
-void loop() {
-
-  while (true) {
-
-    handle_kbd_input();
-      
-    if (decrease_pressed || increase_pressed) {
-      send_speed_chg(speed_idx);
-      if (decrease_pressed)
-        decrease_pressed = false; // reset
-      if (increase_pressed)
-        increase_pressed = false; // reset
-    }
-  }
+bool isDataOnlySpaces() {
+  return std::all_of(data.begin(), data.end(), [](char c) { return c == ' '; });
 }
 
 void handle_kbd_input() {
@@ -626,8 +699,7 @@ void handle_kbd_input() {
   M5Cardputer.update();
   if (M5Cardputer.Keyboard.isChange()) {
     if (M5Cardputer.Keyboard.isPressed()) {
-      if (use_speaker)
-        beep();
+      beep();
       Keyboard_Class::KeysState status = M5Cardputer.Keyboard.keysState();
 
       for (auto i : status.word) {
@@ -651,11 +723,15 @@ void handle_kbd_input() {
 
         if (status.enter) {
           data.remove(0, 2);
-          if (data.length() > 0) {
-            canvas.println(data);
-            canvas.pushSprite(4, 4);
-            send_text_msg();  // send the text to the M5Echo
-            //send(data);           
+          // check if data does contain only spaces
+          // If so, do not send.
+          if (isDataOnlySpaces() == false) { 
+            if (data.length() > 0) {
+              canvas.println(data);
+              canvas.pushSprite(4, 4);
+              send_text_msg();  // send the text to the M5Echo
+              //send(data);
+            }
           }
           data = "> ";
         }
@@ -670,11 +746,34 @@ void handle_kbd_input() {
 
       for (auto i : status.word) {
         if (ctrl_pressed) {
-          if (i == KEY_FLIP_SPEAKER_FLAG) {
+          if (i == SHOW_COMMANDS) {
+            show_commands_flag = true;
+            disp_commands();
+            disp_main_screen();
+            break;
+          }
+          if (i == KEY_FLIP_SPEAKER) {
               use_speaker = !use_speaker; // flip the flag
+              data = "> ";
               ctrl_pressed = false;
               break;
           }
+          if (i == MORSE_GO) {
+            morse_go_flag = true;
+            Serial.print(txt0);
+            Serial.printf("%s%s + \'g\' %s\n", txts[0], txts[3], txts[2]);
+          }
+          if (i == MORSE_END) {
+            morse_end_flag = true;
+            Serial.print(txt0);
+            Serial.printf("%s%s + \'e\' %s\n", txts[0], txts[3], txts[2]);
+          }
+          if (i == KEY_RESET) {
+            key_reset_flag = true;
+            Serial.print(txt0);
+            Serial.printf("%s%s + \'r\' %s\n", txts[0], txts[3], txts[2]);
+          }
+
           if (i == KEY_SPEED_DECR) {
             Serial.print(txt0);
             Serial.printf("%s%s + \'d\' %s\n", txts[0], txts[3], txts[2]);
@@ -705,9 +804,11 @@ void handle_kbd_input() {
           }
         }
       }  // end-of-for loop
-      if (decrease_pressed || increase_pressed) {
+      if (show_commands_flag || key_reset_flag || morse_go_flag || morse_end_flag || decrease_pressed || increase_pressed) {
         data = "> ";
         ctrl_pressed = false; // reset flag
+        if (show_commands_flag)
+          show_commands_flag = false;
         delay(500); // debounce delay
       }
     }
@@ -795,3 +896,37 @@ void I2C_ScannerWire1()
     Serial.println("done\n");
 }
 */
+
+// For a very util source for the Cardputer see:
+// https://cardputer.free.nf/class_keyboard___class.html
+void loop() {
+  cleanup(); // reset all global flags and settings
+  while (true) {
+
+    handle_kbd_input();
+
+    if (key_reset_flag) {
+      send_cmd(CMD_RESET);
+      key_reset_flag = false;
+    }
+
+    if (morse_go_flag) {
+      send_cmd(CMD_MORSE_GO);
+      morse_go_flag = false;
+    }
+
+    if (morse_end_flag) {
+      send_cmd(CMD_MORSE_END);
+      morse_end_flag = false;
+    }
+
+    if (decrease_pressed || increase_pressed) {
+      send_speed_chg(speed_idx);
+      if (decrease_pressed)
+        decrease_pressed = false; // reset
+      if (increase_pressed)
+        increase_pressed = false; // reset
+    }
+  }
+}
+
