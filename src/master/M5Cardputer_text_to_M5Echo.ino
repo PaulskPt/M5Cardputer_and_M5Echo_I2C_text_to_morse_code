@@ -589,12 +589,13 @@ void send_speed_chg(int8_t speed_idx) {
 
   Serial.print(txt0);
   Serial.printf("%s%s%s%s: ", txts[6], txts[7], txts[1], txts[2]);
-  for (uint8_t i = 0; message[i] != '\0'; i++) {
+  uint8_t i;
+  for (i = 0; message[i] != '\0'; i++) {
     Serial.printf("0x%02x", message[i]);
     if (i < le_message-1)
       Serial.print(", ");
   }
-  Serial.println();
+  Serial.printf("0x%02x\n", message[i]);  // Print the NULL terminator
   size_t bytes_sent = 0;
   Wire.beginTransmission(I2C_DEV_ADDR);
   bytes_sent = Wire.write((uint8_t *)message, le_message);
