@@ -46,7 +46,7 @@ In this moment the I2C communication is one-way: from the I2C master to the I2C 
 towards the slave device. (And inherent to the I2C protocol the I2C module (Wire.h / Wire.cpp), the slave will send ACK
 impulses back to the master).
 
-There exits three types of messages (msgType) initiated by the master device:
+There exit three types of messages (msgType) initiated by the master device:
 
 ```
    a) command message (CMD_MESSAGE);
