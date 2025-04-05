@@ -386,8 +386,8 @@ void send_text_msg() {
   String s;
   if (message[3] == TEXT_MESSAGE)
     s = "TEXT_MESSAGE";
-  else if (message[3] == SPEED_CHG)
-    s = "SPEED_CHG";
+  else if (message[3] == CMD_SPEED_CHG)
+    s = "CMD_SPEED_CHG";
 
   //  Note:
   //  %.*s = %.*s 
@@ -436,7 +436,7 @@ void send_text_msg() {
   //free(message);
  }
 
- void send_cmd(int8_t cmd_idx) {
+ void send_cmd(uint8_t cmd_idx) {
   static constexpr const char txt0[] PROGMEM = "send_cmd(): ";
   static constexpr const char *txts[] PROGMEM = {
     "sending ",       // 0
@@ -454,6 +454,11 @@ void send_text_msg() {
   uint8_t *message;
   uint8_t message_bufferSize = 6;
 
+  if (my_debug) {
+    Serial.print(txt0);
+    Serial.printf("param cmd_idx = %d\n", cmd_idx);
+  }
+
   message = NULL;
   message = (uint8_t *)malloc(message_bufferSize);
   if (message == NULL) {
@@ -465,42 +470,58 @@ void send_text_msg() {
   message[0] = I2C_DEV_ADDR;
   message[1] = (TXpacketNr & 0xFF00) >> 8; // put MSB of uint16_t
   message[2] = TXpacketNr & 0xFF; // put LSB of uint16_t
-  message[3] = CMD_MESSAGE;
-  message[4] = cmd_idx;
+  message[3] = cmd_idx;
+
+  Serial.print(txt0);
+  if (cmd_idx >= CMD_DO_NOTHING && cmd_idx <= TEXT_MESSAGE) {
+    if (my_debug) {
+      uint8_t tmp_idx = cmd_idx - CMD_DO_NOTHING;
+      Serial.printf("tmp_idx = %d, in string = \"%s\"\n", tmp_idx, cmd_idx_arr[tmp_idx]);
+    }
+  
+    if ((cmd_idx == CMD_DO_NOTHING) || (cmd_idx == CMD_RESET) || (cmd_idx == CMD_MORSE_GO) || (cmd_idx == CMD_MORSE_END)) {
+      message[4] = NO_DATA;
+    } else {
+      message[4] = CMD_IDX_TODO;
+    }
+  } else {
+    Serial.print(txt0);
+    Serial.print(F("value of cmd_idx is out of bounds. Value = "));
+    Serial.println(cmd_idx);
+    message[4] = NO_DATA;
+  }
   message[5] = '\0';
   le_message=6; // was: =sizeof(message)/sizeof(message[0]) + 1;
 
   String s1;
   switch (message[3]) {
-    case CMD_MESSAGE:
-      s1 = "CMD_MESSAGE";
-      break;
-    case TEXT_MESSAGE:
-      s1 = "TEXT_MESSAGE";
-      break;
-    case SPEED_CHG:
-      s1 = "SPEED_CHG";
-      break;
-  }
-
-  String s2;
-  switch (message[4]) {
     case CMD_DO_NOTHING:
-      s2 = "CMD_DO_NOTHING";
+      s1 = "CMD_DO_NOTHING";
       break;
     case CMD_RESET:
-      s2 = "CMD_RESET";
+      s1 = "CMD_RESET";
       break;
     case CMD_MORSE_GO:
-      s2 = "CMD_MORSE_GO";
+      s1 = "CMD_MORSE_GO";
       break;
     case CMD_MORSE_END:
-      s2 = "CMD_MORSE_END";
+      s1 = "CMD_MORSE_END";
+      break;
+    case CMD_SPEED_CHG:
+      s1 = "CMD_SPEED_CHG";
       break;
   }
   
   Serial.print(txt0);
-  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, msgType = %s, cmd = %s\n", 
+  String s2;
+  if (message[4] == NO_DATA)
+    s2 = "NO_DATA";
+  else if (message[4] == CMD_IDX_TODO)
+    s2 = "CMD_IDX_TODO";
+  else
+    s2 = "";
+
+  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, cmd = %s, data = \"%s\"\n", 
               message[0], 
               (message[1] << 8) | message[2], 
               s1,
@@ -565,23 +586,22 @@ void send_speed_chg(int8_t speed_idx) {
   message[0] = I2C_DEV_ADDR;
   message[1] = (TXpacketNr & 0xFF00) >> 8; // put MSB of uint16_t
   message[2] = TXpacketNr & 0xFF; // put LSB of uint16_t
-  message[3] = SPEED_CHG;
+  message[3] = CMD_SPEED_CHG;
   message[4] = speed_idx;
   message[5] = '\0';
   le_message=6; // was: =sizeof(message)/sizeof(message[0]) + 1;
 
   String s;
-  if (message[3] == TEXT_MESSAGE)
-    s = "TEXT_MESSAGE";
-  else if (message[3] == SPEED_CHG)
-    s = "SPEED_CHG";
+  if (message[3] == CMD_SPEED_CHG)
+    s = "CMD_SPEED_CHG";
 
   Serial.print(txt0);
-  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, msgType = %s, speed_idx = %d\n", 
+  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, msgType = %s, speed_idx = %d, NULL-terminator\n", 
               message[0], 
               (message[1] << 8) | message[2], 
               s,
-              message[4]);
+              message[4],
+              message[5]);
 
   Serial.print(txt0);
   Serial.print(F("length of message = "));
@@ -913,6 +933,7 @@ void loop() {
     }
 
     if (morse_go_flag) {
+      Serial.println(F("loop(): CMD_MORSE_GO rcvd. Going to call send_cmd()"));
       send_cmd(CMD_MORSE_GO);
       morse_go_flag = false;
     }

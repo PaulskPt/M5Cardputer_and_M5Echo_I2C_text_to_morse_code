@@ -215,7 +215,7 @@ uint32_t RXpacketNr = 0;
 
 const int tone_time_lst[] = {40, 60, 80, 100, 120, 140, 160, 180, 200};
 int le_tone_time_lst = sizeof(tone_time_lst)/sizeof(tone_time_lst[0]);
-int tone_time_lst_idx = 4; // index to 100
+int tone_time_lst_idx = 4; // index to 120 (default)
 int blu_last_value, red_last_value = 0;
 
 void go_restart() {
@@ -317,7 +317,7 @@ void set_speed() {
   if (rx_code_speed >= 0 && rx_code_speed <= le_tone_time_lst-1) {
     tone_time_lst_idx = rx_code_speed;
   } else {
-    tone_time_lst_idx = 3; // set to default
+    tone_time_lst_idx = 4; // set to default
   }
 
   tone_dly1 = tone_dot.time_ms;
@@ -353,7 +353,7 @@ void set_speed() {
 //      hardware\esp32\2.1.4\libraries\Wire\examples\WireSlave\WireSlave.ino
 void handle_rx(int8_t nrBytes) {
   static constexpr const char txt0[] PROGMEM = "handle_rx(): ";
-  static constexpr const char cmd_idx_arr[][15] PROGMEM = {"CMD_DO_NOTHING", "CMD_RESET", "CMD_MORSE_GO", "CMD_MORSE_END" };
+  
   constexpr size_t cmd_idx_arr_le = sizeof(cmd_idx_arr) / sizeof(cmd_idx_arr[0]);
   uint8_t cmdIdx;
   uint8_t i;
@@ -385,12 +385,11 @@ void handle_rx(int8_t nrBytes) {
         rx_buffer_idx += 1;
       }
     }
-
     if (rx_buffer_idx == 0) 
       return;
     else {
       for (i = 0; i < rx_buffer[i] != '\0'; i++) {
-        if (my_debug) {
+        if (!my_debug) {
           value = rx_buffer[i];
           c = static_cast<char>(rx_buffer[i]); // convert to ASCII      
           Serial.print(txt0);
@@ -421,23 +420,18 @@ void handle_rx(int8_t nrBytes) {
                 Serial.printf(") %lu\n", PacketNr_tmp);
                 break;
             case 3:
-              if (value == CMD_MESSAGE)
-                Serial.print(F("CMD_MESSAGE"));
-              else if (value == TEXT_MESSAGE)
-                Serial.print(F("TEXT_MESSAGE"));
-              else if (value == SPEED_CHG)
-                Serial.print(F("SPEED_CHG"));
-              else
-                Serial.print(F("UNKNOWN"));
-              Serial.println(F(" message type"));
-              break;
-            case 4:
               cmdIdx = value - CMD_DO_NOTHING;  // create index to array
-              Serial.printf("cmdIdx = %d\n", cmdIdx);
-              Serial.printf("length cmd_idx_arr = %d\n", cmd_idx_arr_le);
+              // Serial.printf("cmdIdx = %d = ", cmdIdx);
+              // erial.printf("length cmd_idx_arr = %d\n", cmd_idx_arr_le);
               if (cmdIdx >= 0 && cmdIdx < cmd_idx_arr_le) {
                 Serial.println(cmd_idx_arr[cmdIdx]);
               }
+              break;
+            case 4:
+              if (value == NO_DATA)
+                Serial.println(F("This type of message has no data"));
+              else
+                Serial.println(F("This type of message has data"));
               break;
           }
         }
@@ -460,63 +454,43 @@ void handle_rx(int8_t nrBytes) {
     Serial.print(txt0);
     Serial.printf("RXpacketNr: %u\n", RXpacketNr);
     Serial.print(txt0);
-    Serial.print(F("type of message: "));
-
+    Serial.print(F("type of command: "));
+    rcvd_cmd_idx = rx_buffer[3];
     switch (rx_buffer[3]) {
-      case CMD_MESSAGE:
-        Serial.println(F("CMD_MESSAGE"));
-        rcvd_cmd_flag = true;
+      case CMD_DO_NOTHING:
+        Serial.println(F("DO NOTING"));
+        stop = true;
         break;
-      case SPEED_CHG:
-        Serial.println(F("SPEED CHG"));
+      case CMD_RESET:
+        Serial.println(F("CMD_RESET"));
+        go_restart();
+        break;
+      case CMD_MORSE_GO:
+        Serial.println(F("CMD_MORSE_GO (\'paris\')"));
+        cmd_morse_go_flag = true;
+        cmd_morse_end_flag = false;
+        break;
+      case CMD_MORSE_END:
+        Serial.println(F("CMD_MORSE_END"));
+        cmd_morse_go_flag = false;
+        cmd_morse_end_flag = true;
+        stop = true;
+        break;
+      case CMD_SPEED_CHG:
         rcvd_set_speed_flag = true;
         break;
       case TEXT_MESSAGE:
-        Serial.println(F("TEXT MESSAGE"));
         rcvd_message_flag = true;
         break;
-      default: 
-        Serial.println(F("UNKNOWN. Exiting function.."));
+      default:
+        Serial.println(F("UNKNOWN CMD. Exiting function.."));
         stop = true;
         break;
     }
-
     if (stop == true)
       return;
-
-    if (rcvd_cmd_flag) {
-      Serial.print(txt0);
-      Serial.print(F("type of command: "));
-      rcvd_cmd_idx = rx_buffer[4];
-      switch (rx_buffer[4]) {
-        case CMD_DO_NOTHING:
-          Serial.println(F("DO NOTING"));
-          stop = true;
-          break;
-        case CMD_RESET:
-          Serial.println(F("CMD_RESET"));
-          go_restart();
-          break;
-        case CMD_MORSE_GO:
-          Serial.println(F("CMD_MORSE_GO (\'paris\')"));
-          cmd_morse_go_flag = true;
-          cmd_morse_end_flag = false;
-          break;
-        case CMD_MORSE_END:
-          Serial.println(F("CMD_MORSE_END"));
-          cmd_morse_go_flag = false;
-          cmd_morse_end_flag = true;
-          stop = true;
-          break;
-        default:
-          Serial.println(F("UNKNOWN CMD. Exiting function.."));
-          stop = true;
-          break;
-      }
-      if (stop == true)
-        return;
-    }
-    else if (rcvd_set_speed_flag) {        
+  
+    if (rcvd_set_speed_flag) {        
       new_speed_idx = rx_buffer[4];
       rx_code_speed = new_speed_idx;
       Serial.print(txt0);
@@ -536,7 +510,7 @@ void handle_rx(int8_t nrBytes) {
       Serial.printf("\"%.*s\"", rx_msg_len, (char *)&rx_buffer[4]);
       Serial.print(F(", length: "));
       Serial.println(rx_msg_len);
-      if (!cpyRXtoCW()) // Copy the text part of rx_buffer to the cw_buffer
+      if (!cpyRXtoCW()) // Copy the rx_buffer to the cw_buffer
         return;
     }
   }
@@ -807,10 +781,12 @@ void send_morse() {
         if (cmd_morse_end_flag == true) {
           Serial.println();
           Serial.print(txt0);
-          Serial.println(F("CMD morse end received. Exiting function."));
+          Serial.println(F("CMD_MORSE_END received. Exiting function."));
           btn_beep();
           delay(100);  // button debounce delay
           freeCWBuffer();
+          cmd_morse_go_flag = false;
+          cmd_morse_end_flag = false;
           return;
         }
       }
@@ -1154,13 +1130,12 @@ void loop() {
       //cleanup();
     }
 
-    if (rcvd_cmd_flag == true) {
-      if (cmd_morse_go_flag) {
-        send_morse();
-        cmd_morse_go_flag = false; // reset flag
-        cmd_morse_end_flag = false; // same
-      }
+    if (cmd_morse_go_flag) {
+      send_morse();
+      cmd_morse_go_flag = false; // reset flag
+      cmd_morse_end_flag = false; // same
     }
+
 
     if (rcvd_message_flag == true) {
       Serial.print(txt0);
