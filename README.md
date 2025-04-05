@@ -109,7 +109,7 @@ h) in the case of a text message:
 i) in the case of a command message:
 
 ```
-<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <MsgType> <Cmd_idx> <NULL-terminator>
+<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <MsgType> <Cmd> <NULL-terminator>
 
 ```
 
