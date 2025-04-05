@@ -1,0 +1,105 @@
+Friday 2025-04-05 00h20 utc+1
+
+(c) 2025 Paulus Schulinck (Github @PaulskPt)
+License: MIT
+
+IDE Arduino v2.3.5
+
+Boards:
+Master: M5Stack Cardputer;
+Sketch: M5Cardputer_text_to_M5Echo.ino
+
+Slave:  M5Stack Atom Echo,
+M5Echo_I2C_text_rx_to_morse.ino 
+
+NOTES:
+
+This run of both sketches (resp. in the master device and in the slave device) is to test
+the following added functionality:
+
+a) from the master device send a cmd message with the CMD_RESET, the order the slave device to execute an ESP.Restart().
+
+This test confirmed that it works!
+
+  
+Conclusion: Now we have a reliable means to reset the slave by remote command when necessary.
+
+-----------------------------------------------------------------------------------------------------
+
+MASTER DEVICE Serial Monitor output:
+
+setup(): M5Stack Cardputer v1.0.
+I2C test
+to send text for morse code 
+and to send speed change commands
+to a M5Stack Atom Echo device.
+setup(): Board type: 14
+setup(): I2C Pins set successfull.
+setup(): setting I2C buffersize to 42 successfull.
+setup(): Successfully connected onto I2C bus nr: 0.
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): data = > s
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): data = > r
+handle_kbd_input(): <ctrl> active + 'r' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14386, msgType = CMD_MESSAGE, cmd = CMD_RESET
+send_cmd(): length of message = 6
+send_cmd(): Going to send command message: 0x55, 0x38, 0x32, 0xfc, 0xc9, 
+send_cmd(): command message sent. Number of bytes sent: 6
+
+-----------------------------------------------------------------------------------------------------
+
+SLAVE DEVICE Serial Monitor output:
+
+M5Stack M5Atom Echo
+I2C test
+to receive text for morse code 
+and to receive speed change commands
+from a M5Stack Cardputer device.
+
+setup(): Board type: M5Atom Echo
+setup(): I2C Pins set successfull.
+setting I2C buffersize to 42 successfull.
+setup(): Successfully connected onto I2C bus nr: 0.
+E (4102) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
+
+loop(): entering the while loop...
+loop(): ESP.getFreeHeap = 302588
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14386
+handle_rx(): type of message: CMD_MESSAGE
+handle_rx(): type of command: CMD_RESET
+Going to restart in 5 seconds...
+ets Jun  8 2016 00:22:57
+
+rst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 188777542, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:1184
+load:0x40078000,len:13260
+load:0x40080400,len:3028
+entry 0x400805e4
+M5Ato
+M5Stack M5Atom Echo
+I2C test
+to receive text for morse code 
+and to receive speed change commands
+from a M5Stack Cardputer device.
+
+setup(): Board type: M5Atom Echo
+setup(): I2C Pins set successfull.
+setting I2C buffersize to 42 successfull.
+setup(): Successfully connected onto I2C bus nr: 0.
+E (4102) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
+
+loop(): entering the while loop...
+loop(): ESP.getFreeHeap = 302588
+
+
+------------------------------------------------------------------------
+
+
