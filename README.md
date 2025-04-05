@@ -46,14 +46,18 @@ In this moment the I2C communication is one-way: from the I2C master to the I2C 
 towards the slave device. (And inherent to the I2C protocol the I2C module (Wire.h / Wire.cpp), the slave will send ACK
 impulses back to the master).
 
-There exist three types of messages (msgType) initiated by the master device:
+In the initial version there were three types of messages. 
+To make it more simple: 
+now there is only defined one type of message. The message can contain commands only, without data. These are:
+- CMD_DO_NOTHING
+- CMD_RESET
+- CMD_MORSE_GO
+- CMD_MORSE_END
 
-```
-   a) command message (CMD_MESSAGE);
-   b) text message (TEXT_MESSAGE);
-   c) morse speed change message (SPEED_CHG).
+The only messages that contain data are:
+- the CMD_SPEED_CHG  (morse speed change message, that contains an index value to a speeds array as data);
+- the TEXT_MESSAGE (a message containing text as data).
 
-``` 
 Upon reception the I2C slave device, the M5Echo, will be check for correct addressing, msgType and contents. In the case of a text message, the M5Echo will translate the received text into morse code, then produces the
 morse code audio through its loudspeaker. In this moment there are four types of commands for the M5Echo:
 
@@ -102,14 +106,23 @@ MESSAGE CONSTRUCTION :
 h) in the case of a text message:
 
 ```
-<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <MsgType> <Text> <NULL-terminator>
+<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <Cmd> <Text (data)> <NULL-terminator>
+                                                                  |_ TEXT_MESSAGE
+```
 
+i) in the case of a speed change command message:
+
+```
+<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <Cmd> <Speed_index)> <NULL-terminator>
+                                                                  |_ CMD_SPEED_CHG
 ```
 
 i) in the case of a command message:
 
 ```
-<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <MsgType> <Cmd> <NULL-terminator>
+<7-bit I2C address> <32-bit packetNr MSB> <32-bit packetNr LSB> <Cmd> <Data> <NULL-terminator>
+                                                                  |      |_ NO_DATA
+                                                                  |_ for example: CMD_MORSE_GO
 
 ```
 
