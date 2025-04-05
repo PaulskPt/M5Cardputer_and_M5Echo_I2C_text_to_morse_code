@@ -44,9 +44,9 @@ I2C Communication:
 
 In this moment the I2C communication is one-way: from the I2C master to the I2C slave, Using the hexadecimal address 0x55
 towards the slave device. (And inherent to the I2C protocol the I2C module (Wire.h / Wire.cpp), the slave will send ACK
-impulsed back to the master).
+impulses back to the master).
 
-There exits three types of messages (msgType):
+There exits three types of messages (msgType) initiated by the master device:
 
 ```
    a) command message (CMD_MESSAGE);
@@ -57,15 +57,19 @@ There exits three types of messages (msgType):
 Upon reception the I2C slave device, the M5Echo, will be check for correct addressing, msgType and contents. In the case of a text message, the M5Echo will translate the received text into morse code, then produces the
 morse code audio through its loudspeaker. In this moment there are four types of commands for the M5Echo:
 
+```
   d) CMD_DO_NOTHING; (in this moment serving as a base value (200) to calculate an index to the list of commands);
   e) CMD_RESET (if necessary this command can be used to instruct the slave to execute a software reset (ESP.restart())).
   f) CMD_MORSE_GO (to instruct the M5Echo to start sending a default text "paris ", in morse code used to measure the speed of the morse code);
   g) CMD_MORSE_END (to instruct the M5Echo to end an ongoing sending of morse code. This can be in the case of the default text "paris " or
-     another text received from the master device (M5Cardputer)).
+     another text received from the master device).
 ```
+
 OTHER COMMANDS:
+
   Beside the command message for the slave device, there is are two commands used for the master device.
-  All commands are of the following key combination: <ctrl> + <key>  :
+  
+  All commands are of the following key combination: "\<ctrl\> + \<key\>"  :
   
   LIST OF KEY COMMANDS
   
@@ -90,7 +94,7 @@ OTHER COMMANDS:
 DEFINITIONS:
   
 Upon start (or reset) the Arduino sketch running on either the master or the slave device
-will load certain definitions from the #include file: puter_echo.h which is present in the 
+will load certain definitions from the #include file: "puter_echo.h" which is present in the 
 subfolers "master" and "slave".
 
 MESSAGE CONSTRUCTION : 
@@ -128,11 +132,11 @@ the text
 ```
 and on the bottom line there will appear the prompt: "> ".
 Now the sketch is waiting for your input:
-In case of a text: type the text. End it with a space character and confirm your entry by hitting the <Enter> key.
+In case of a text: type the text. End it with a space character and confirm your entry by hitting the \<Enter\> key.
 In case of a command: first press the "ctrl" button (down-left) followed by a letter, one of the letters shown in
 the list of COMMANDS above ({c, i, d, r, s, g, e}). After pressing these two keys the sketch of the Cardputer
 will interprete and handle the command given. If it is a command for the M5Echo the M5Cardputer will immediately
-send a Command type of message, containing the command you entered, to the M5Echo. My experienc is that this goes
+send a Command type of message, containing the command you entered, to the M5Echo. My experience is that this goes
 very rapidly. On the oscillographs one can see that an I2C command type of message only contains 6 bytes.
 Sending this command message packet takes only 1,1 millisecond!
 
@@ -185,7 +189,7 @@ loop(): ESP.getFreeHeap = 302588
 ```
 
 The sketch uses two buffers of 128 bytes each in memory.
-The first buffer is "rx_buffer". This buffer receives the received data from the I2C connection.
+The first buffer is "rx_buffer". This buffer receives the data from the I2C connection.
 The second buffer is "cw_buffer". After every reception of a message packet via I2C, this buffer 
 will receive a copy of the contents of the rx_buffer. Why? I have chosen for this option because,
 when the M5Echo is sending the morse code text, at every loop of inside the function send_morse(),
@@ -195,7 +199,7 @@ sketch (after the I2C polling returning into the send_morse() function, will exe
 received, for instance: CMD_MORSE_END. In this case the ongoing sending of morse code will be
 ended). When othere types of messages are received they will be ignored in that moment. The
 sending of the morse code will continue, using the contents of the cw_buffer (because the rx_buffer meanwhile
-has been filled with data from a new message.
+has been filled with data from a new message).
 
 The sketch for the slave contains a table for the conversion from ASCII to code to send morse dots and dashes.
 
@@ -261,37 +265,33 @@ The markings "|1|", "| 3 |" and "|   7   |" represent time spacings:
 - | 3 | representing character space ("character_delay", or (variable) dly3);
 - |   7   |" representing a word space ("character_delay", or (variable) dly7).
 
-To end a morse text sending always with a word_spacing it is necessary to reming that when typing a text to send
-on the master device, always end the text with a space character, like in the default "paris ". The sketch will
-also add an end-of-message/text marker: '\0'. The sketch of the slave uses various for (...) loops which check
-for the '\0' NULL terminator.
-
-
+End of texts: it is necessary to remember that when preparing (typing) a text on the master device, 
+always end the text with a "space character" (|__|) (key on the right, below the Enter key), 
+like in the default "paris ". The sketch will also add an end-of-message/text marker: '\0'. 
+The sketch of the slave uses various for (...) loops which check for the '\0' NULL terminator.
 
 FLASHING NOTE
 
 If you use the Arduino IDE v2 take note of my recent experience. A few days ago, when starting up the Arduino IDE v2.3.4,
 it presented me a notice that there was an upgrade for the IDE to version v2.3.5 available. I accepted to install the upgrade.
 After realisation of this upgrade, I tried to flash the M5Echo with the slave sketch. The flashing went OK, however after reset 
-the M5Echo kept doing a software reset. "Panic...". In the crash message I saw the word "DIO", however, I checked the option:
-"Arduino > Tools > Flash Mode". I saw that this option was default set for "QIO 80MHz". When I changed this option to "DIO 80MHz".
-Then I flashed the sketch again to the M5Echo. Next the sketch ran flawlessly.
+the M5Echo kept looping a software reset. "Panic...". In the crash message I saw the word "DIO". In the IDE I checked the option:
+"Arduino > Tools > Flash Mode". I saw that this option was default set for "QIO 80MHz". I changed this option to "DIO 80MHz".
+After I flashed the sketch again to the M5Echo, the sketch ran flawlessly.
 
+DESCRIPTION DEFAULT MORSE SPEED TEST ("paris ")
 
-In the morse speed test:
+During one minute the word "paris " repeatedly will be send in morse code.
+At the end of the test, the number of times the word "paris " was sent will be printed.
+This value represents the speed in morse code (words per minute).
 
-DESCRIPTION DEFAULT MORSE TEST ("paris ")
-
-During one minute the word "paris" repeatedly will be send in morse code.
-At the end of the test, the number of times the word "paris" was sent will be printed.
-This value represents the speed in morse code (words per minute). 
 In the sketch there are three global variables that determine the speed and the duration of 
 the morse code being send. The variable ```dly1``` (unit delay) is created
 and set in line 96. The values of ```dly3``` (character delay) and ```dly7``` (word delay)
 are derived from variable dly1 as: dly3 = 3 * dly1 and dly7 = 7 * dly1. 
 The value of dly1 determines the speed the morse code will be send. 
 The morse speed to send can be varied between 10 and 54 words per minute. 
-In lines 78-99 of the Arduino sketch is a table that shows 
+In lines 105-107 of the Arduino sketch is a table that shows 
 the relation between the value of dly1 and the morse speed being send.
 For example: the default value of dly1 is 50 (milliSeconds). With this value 
 the morse speed will be 19 words per minute (wpm). The value of dly1 is derived from the
@@ -305,7 +305,7 @@ And the global variable: ```tone_dash.time_ms``` is derived from the value of ``
 Docs:
 
 ```
-text files containing Arduino Monitor Output texts.
+Text files containing Arduino Monitor Output texts.
 
 
 Images: 
@@ -324,8 +324,10 @@ Links to product pages of the hardware used:
 
 Links to product accessories of the hardwar used:
 - Seeed studio Grove I2C Hub [info](https://www.seeedstudio.com/Grove-I2C-Hub.html);
-- Seeed studio Grove Universal 4 Pin Buckled 20cm cable (5 Pcs Pack) [info](https://www.seeedstudio.com/Grove-Universal-4-Pin-Buckled-20cm-Cable-5-PCs-pack.html);
-- Seeed studio Grove 4 pin Mal jumper to Grove 4 pin Conversion cable (5 Pcs Pack) [info](https://www.seeedstudio.com/Grove-4-pin-Male-Jumper-to-Grove-4-pin-Conversion-Cable-5-PCs-per-Pack.html)
+- Seeed studio Grove Universal 4 Pin Buckled 20cm cable (5 Pcs Pack)
+  [info](https://www.seeedstudio.com/Grove-Universal-4-Pin-Buckled-20cm-Cable-5-PCs-pack.html);
+- Seeed studio Grove 4 pin Mal jumper to Grove 4 pin Conversion cable (5 Pcs Pack)
+  [info](https://www.seeedstudio.com/Grove-4-pin-Male-Jumper-to-Grove-4-pin-Conversion-Cable-5-PCs-per-Pack.html)
 
 
 Known Issues:
