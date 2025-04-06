@@ -51,6 +51,7 @@
 #include <M5Cardputer.h>
 #include <M5GFX.h>
 #include "puter_echo.h"
+#include <algorithm> // needed for if (!std::find(std::begin(cmd_ltrs), std::end(cmd_ltrs), data[2]) != std::end(cmd_ltrs)) 
 
 
 
@@ -265,7 +266,6 @@ void setup() {
     Serial.print(txt0);
     Serial.print(F("Successfully connected onto I2C bus nr: "));
     Serial.printf("%d.\n", i2c_bus_num);
-    // I2C_ScannerWire();
   }
   disp_main_screen();
 }
@@ -709,14 +709,16 @@ bool isDataOnlySpaces() {
   return std::all_of(data.begin(), data.end(), [](char c) { return c == ' '; });
 }
 
+// Called by handle_kbd_input
+void pr_fillin(char ltr_fillin) {
+  Serial.print(F("<ctrl> + \'"));
+  Serial.print(ltr_fillin);
+  Serial.println(F("\' pressed"));
+  // Serial.printf("%s%s + \'%c\' %s\n", txts[0], txts[2], ltr_fillin, txts[1]);
+}
+
 void handle_kbd_input() {
   static constexpr const char txt0[] PROGMEM = "handle_kbd_input(): ";
-  static constexpr const char *txts[] PROGMEM = {
-    "<ctrl> ",   // 0
-    "key ",      // 1
-    "pressed",   // 2
-    "active"     // 3
-  };
 
   M5Cardputer.update();
   if (M5Cardputer.Keyboard.isChange()) {
@@ -727,18 +729,34 @@ void handle_kbd_input() {
       for (auto i : status.word) {
         data += i;
       }
-      if ( data != "> ") {
-        Serial.print(txt0);
-        Serial.print(F("data = "));
-        Serial.println(data);
+
+      if (data != "> ") {
+        if (data.length() >= 2) {
+          // Check if data[2] is in cmd_ltrs
+          if (std::find(std::begin(cmd_ltrs), std::end(cmd_ltrs), data[2]) == std::end(cmd_ltrs)) {  
+            // character typed is not found in the list cmd_ltrs, so: print it.  
+            Serial.print(txt0);
+            Serial.print(F("data = \""));
+            Serial.print(data);
+            Serial.println("\"");
+          } else {
+            // the character typed is found in the list cmd_ltrs.
+            Serial.print(txt0);
+            pr_fillin(data[2]);
+          }
+        }
       }
 
       if (status.ctrl) {
         ctrl_pressed = true;
         Serial.print(txt0);
-        Serial.printf("%s%s\n", txts[0], txts[2]);
-      }
-      else {
+        Serial.println(F("<ctrl> pressed"));
+        if (data.length() > 2)
+          // wipe out what jas been typed before, 
+          // because user hit the <ctrl> button!
+          data = "> ";  
+      } else {
+       
         if (status.del) {
           data.remove(data.length() - 1);
         }
@@ -766,65 +784,68 @@ void handle_kbd_input() {
                                         M5Cardputer.Display.height() - 24);
       }
 
+      // brk2 is needed to break out of the for..loop
+      // because we have also "break" inside the switch block
+      bool brk2 = false; 
+
       for (auto i : status.word) {
         if (ctrl_pressed) {
-          if (i == SHOW_COMMANDS) {
-            show_commands_flag = true;
-            disp_commands();
-            disp_main_screen();
-            break;
-          }
-          if (i == KEY_FLIP_SPEAKER) {
+          switch (i) {
+            case SHOW_COMMANDS:
+              show_commands_flag = true;
+              disp_commands();
+              disp_main_screen();
+              brk2 = true;
+              break;
+            
+            case SPEAKER_ON_OFF:
               use_speaker = !use_speaker; // flip the flag
               data = "> ";
               ctrl_pressed = false;
+              brk2 = true;
+              break;
+            
+            case MORSE_GO:
+              morse_go_flag = true;
+              break;
+        
+            case MORSE_END:
+              morse_end_flag = true;
+              break;
+        
+            case KEY_RESET:
+              key_reset_flag = true;
+              break;
+        
+            case KEY_SPEED_DECR:
+              decrease_pressed = true;
+              speed_idx -= 1;
+              if (my_debug) {
+                  Serial.print(txt0);
+                  Serial.print(F("speed_idx < SPEED_IDX_MINIMUM ? "));
+                  Serial.printf("%s\n", (speed_idx < SPEED_IDX_MINIMUM) ? "true" : "false");
+              }
+              if (speed_idx < SPEED_IDX_MINIMUM)
+                  speed_idx = SPEED_IDX_MINIMUM;
+              brk2 = true;
+              break;
+        
+            case KEY_SPEED_INCR:
+              increase_pressed = true;
+              speed_idx += 1;
+              if (my_debug) {
+                  Serial.print(txt0);
+                  Serial.print(F("speed_idx >= SPEED_IDX_MAXIMUM ? "));
+                  Serial.printf("%s\n", (speed_idx >= SPEED_IDX_MAXIMUM) ? "true" : "false");
+              }
+              if (speed_idx >= SPEED_IDX_MAXIMUM)
+                  speed_idx = SPEED_IDX_MAXIMUM;
+              brk2 = true;
               break;
           }
-          if (i == MORSE_GO) {
-            morse_go_flag = true;
-            Serial.print(txt0);
-            Serial.printf("%s%s + \'g\' %s\n", txts[0], txts[3], txts[2]);
-          }
-          if (i == MORSE_END) {
-            morse_end_flag = true;
-            Serial.print(txt0);
-            Serial.printf("%s%s + \'e\' %s\n", txts[0], txts[3], txts[2]);
-          }
-          if (i == KEY_RESET) {
-            key_reset_flag = true;
-            Serial.print(txt0);
-            Serial.printf("%s%s + \'r\' %s\n", txts[0], txts[3], txts[2]);
-          }
-
-          if (i == KEY_SPEED_DECR) {
-            Serial.print(txt0);
-            Serial.printf("%s%s + \'d\' %s\n", txts[0], txts[3], txts[2]);
-            decrease_pressed = true;
-            speed_idx -= 1;
-            if (my_debug) {
-              Serial.print(txt0);
-              Serial.print(F("speed_idx < SPEED_IDX_MINIMUM ? "));
-              Serial.printf("%s\n", (speed_idx < SPEED_IDX_MINIMUM) ? "true" : "false");
-            }
-            if (speed_idx < SPEED_IDX_MINIMUM)
-              speed_idx = SPEED_IDX_MINIMUM;
-            break;
-          }
-          if (i == KEY_SPEED_INCR) {
-            Serial.print(txt0);
-            Serial.printf("%s%s + \'i\' %s\n", txts[0], txts[3], txts[2]);
-            increase_pressed = true;
-            speed_idx += 1;
-            if (my_debug) {
-              Serial.print(txt0);
-              Serial.print(F("speed_idx >= SPEED_IDX_MAXIMUM ? "));
-              Serial.printf("%s\n", (speed_idx >= SPEED_IDX_MAXIMUM) ? "true" : "false");
-            }
-            if (speed_idx >= SPEED_IDX_MAXIMUM)
-              speed_idx = SPEED_IDX_MAXIMUM;
-            break;
-          }
         }
+        if (brk2)
+          break;
       }  // end-of-for loop
       if (show_commands_flag || key_reset_flag || morse_go_flag || morse_end_flag || decrease_pressed || increase_pressed) {
         data = "> ";
@@ -837,90 +858,9 @@ void handle_kbd_input() {
   }
 }
 
-
-void I2C_ScannerWire() {
-  static constexpr const char txt0[] PROGMEM = "I2C_ScannerWire(): ";
-  byte error;
-  uint8_t address;
-  uint8_t nDevices;
-
-  Serial.print(txt0);
-  Serial.println(F("Scanning for I2C devices..."));
-
-  nDevices = 0;
-  for(address = 0x0; address < 0x7F; address++ )
-  {
-    Serial.print(txt0);
-    Serial.print(F("scanning address: "));
-    Serial.printf("0x%02x\n", address);
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-
-    if (error == 0)
-    {
-      Serial.print(F("I2C device found at address: "));
-      Serial.printf("0x%02x", address);
-      Serial.println(" !");
-      I2C_device_found = true;
-      nDevices++;
-      break;
-    }
-    /*
-    else if (error==4)
-    {
-      Serial.print("Unknown error at address: ");
-      Serial.printf("0x%02x\n", address);
-    }
-    */   
-  }
-  if (nDevices == 0)
-    Serial.println("No I2C devices found\n");
-  else
-    Serial.println("done\n");
-}
-
-
-/*
-void I2C_ScannerWire1()
-{
-  byte error, address;
-  int nDevices;
-
-  Serial.println("Scanning...");
-
-  nDevices = 0;
-  for(address = 1; address < 127; address++ )
-  {
-    Wire1.beginTransmission(address);
-    error = Wire1.endTransmission();
-
-    if (error == 0)
-    {
-      Serial.print("I2C device found at address 0x");
-      if (address<16)
-        Serial.print("0");
-      Serial.print(address,HEX);
-      Serial.println("  !");
-
-      nDevices++;
-    }
-    else if (error==4)
-    {
-      Serial.print("Unknown error at address 0x");
-      if (address<16)
-        Serial.print("0");
-      Serial.println(address,HEX);
-    }    
-  }
-  if (nDevices == 0)
-    Serial.println("No I2C devices found\n");
-  else
-    Serial.println("done\n");
-}
-*/
-
 // For a very util source for the Cardputer see:
 // https://cardputer.free.nf/class_keyboard___class.html
+
 void loop() {
   cleanup(); // reset all global flags and settings
   while (true) {

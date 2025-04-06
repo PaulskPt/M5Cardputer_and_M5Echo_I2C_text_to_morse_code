@@ -172,34 +172,38 @@ setup(): Successfully connected onto I2C bus nr: 0.
 
 THE SLAVE DEVICE
 
-After a reset the following text will be shown on the Serial Monitor output of the M5Echo:
+MORSE SEND FUNCTION
 
 ```
-ets Jun  8 2016 00:22:57
+   The unit of morse code speed is the number of times
+   the word "paris" is sent in morse code per minute.
+   A speed of morse code of 16 words per minute is equal to
+   sending the word "paris" 16 times per minute.
 
-rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
-configsip: 188777542, SPIWP:0xee
-clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
-mode:DIO, clock div:1
-load:0x3fff0030,len:1184
-load:0x40078000,len:13260
-load:0x40080400,len:3028
-entry 0x400805e4
-M5Ato
-M5Stack M5Atom Echo
-I2C test
-to receive text for morse code 
-and to receive speed change commands
-from a M5Stack Cardputer device.
+   Morse code counting:
+   +-----------------+--------+
+   | what:           | units: |
+   +-----------------+--------+
+   | dot             |    1   |
+   +-----------------+--------+
+   | dot-dash space  |    1   |
+   +-----------------+--------+
+   | dash            |    3   |
+   +-----------------+--------+
+   | character space |    3   |
+   +-----------------+--------+
+   | word space      |    7   |
+   +---------------.-+--------+
 
-setup(): Board type: M5Atom Echo
-setup(): I2C Pins set successfull.
-setting I2C buffersize to 42 successfull.
-setup(): Successfully connected onto I2C bus nr: 0.
-E (4102) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
-
-loop(): entering the while loop...
-loop(): ESP.getFreeHeap = 302588
+         The length of the word "paris" in morse code units (see table above) is: 
+         0             1               2               3               4             5
+         1 2 345 6 789 0 1 234 5 6 789 012 3 4 567 8 9 012 2 4 5 678 9 0 1 2 3 4567890 
+                 p        /   /   a   /   /     r     /   /  i  /   /    s    /       /
+         ./~/---/~/---/~/./~~~/./~/---/~~~/./~/---/~/./~~~/./~/./~~~/./~/./~/./~~~~~~~/  
+                 11       / 3 /   5   / 3 /     7     / 3 /  3  / 3 /    5    /   7   /  = 50 units 
+         1,1,123,1,223,1,2/123/1,1,123/123/1,1,123,1,2/123/1,1,2/123/1,1,2,1,3/1234567/
+      ____/\________             ______/\_______                             ____/\____
+      dot/dash space             character space                             word space
 
 ```
 
@@ -310,6 +314,72 @@ handle_rx(): type of command: CMD_MORSE_END
 send_morse(): CMD morse end recived. Exiting function.
 ```
 
+Change of the speed of the sending of the morse code is done by setting the
+value of variable "speed_idx". The value of this variable will be changed 
+after receiving of a CMD_SPEED_CHG message from the master device,
+in which the value for "new_speed_idx" will be sent as data.
+See function "handle_rx()". 
+The table below show the arbitrary measured speeds.
+
+```
+ +-----------+-------+-----------+-------------+
+ | set new_  | var-  |  milli-   | morse speed |
+ | speed_idx | iable |  sonds    | (wpm)       |
+ +-----------+-------+-----------+-------------+
+ |     0     | dly1  |   100     |    10       |
+ +-----------+-------+-----------+-------------+
+ |     1     | dly1  |    90     |    12       |
+ +-----------+-------+-----------+-------------+
+ |     2     | dly1  |    80     |    13       |
+ +-----------+-------+-----------+-------------+
+ |     3     | dly1  |    70     |    15       |
+ +-----------+-------+-----------+-------------+
+ |     4     | dly1  |    60     |    17       |  \<\< default
+ +-----------+-------+-----------+-------------+
+ |     5     | dly1  |    50     |    18       |
+ +-----------+-------+-----------+-------------+
+ |     6     | dly1  |    40     |    26       |
+ +-----------+-------+-----------+-------------+
+ |     7     | dly1  |    30     |    35       |
+ +-----------+-------+-----------+-------------+
+ |     8     ! dly1  |    20     |    54       |
+ +-----------+-------+-----------+-------------+
+
+```
+
+
+Other serial monitor output:
+
+After a reset the following text will be shown on the Serial Monitor output of the M5Echo:
+
+```
+ets Jun  8 2016 00:22:57
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 188777542, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:1184
+load:0x40078000,len:13260
+load:0x40080400,len:3028
+entry 0x400805e4
+M5Ato
+M5Stack M5Atom Echo
+I2C test
+to receive text for morse code 
+and to receive speed change commands
+from a M5Stack Cardputer device.
+
+setup(): Board type: M5Atom Echo
+setup(): I2C Pins set successfull.
+setting I2C buffersize to 42 successfull.
+setup(): Successfully connected onto I2C bus nr: 0.
+E (4102) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
+
+loop(): entering the while loop...
+loop(): ESP.getFreeHeap = 302588
+
+```
 
 FLASHING NOTE
 

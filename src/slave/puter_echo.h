@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <unordered_map>
+#include <vector>
 
 bool my_debug = false;
 
@@ -57,4 +59,88 @@ struct I2C_TEXT_MESSAGE text_msg = {0, 0, 0, TEXT_MESSAGE, 0,      0};
 //                                ads pnr  msgType        cmd or 1 byte data  NULL terminator
 struct I2C_CMD_MESSAGE cmd_msg = {0, 0, 0, CMD_SPEED_CHG, 5,                  0};
 
+// Define two beep tones
+beep tone_dot = 
+{
+  .freq    = 1200,
+  .time_ms = 100,
+  .maxval  = 10000,
+  .modal   = true
+};
+
+beep tone_dash = 
+{
+  .freq    = 1200,
+  .time_ms = 300,
+  .maxval  = 10000,
+  .modal   = true
+};
+
+// First tone for M5 Echo button press
+beep btn_tone1 = 
+{
+  .freq    = 1200,
+  .time_ms = 100,
+  .maxval  = 10000,
+  .modal   = false
+};
+
+// Second tone for M5 Echo button press
+beep btn_tone2 = 
+{
+  .freq    = 1400,
+  .time_ms = 100,
+  .maxval  = 10000,
+  .modal   = false
+};
+
+// Define the morse code, dot-dash sequences for 
+// the characters that are in the text string to send in morse code
+// Example: in the array {1,2}, the 1 represents a dot, the 2 a dash.
+std::unordered_map<char, std::vector<int>> morse_txt_dict = {
+  //                     decimal:
+  {'\"', {1,2,1,1,2,1}}, // 34 <">
+  {',', {2,2,1,1,2,2}},  // 44
+  {'.', {1,2,1,2,1,2}},  // 46
+  {'/', {2,1,1,2,1}},    // 47
+  {'0', {2,2,2,2,2}},    // 48       = 30 HEX
+  {'1', {1,2,2,2,2}},    // 49
+  {'2', {1,1,2,2,2}},    // 50
+  {'3', {1,1,1,2,2}},    // 51
+  {'4', {1,1,1,1,2}},    // 52
+  {'5', {1,1,1,1,1}},    // 53
+  {'6', {2,1,1,1,1}},    // 54
+  {'7', {2,2,1,1,1}},    // 55
+  {'8', {2,2,2,1,1}},    // 56
+  {'9', {2,2,2,2,1}},    // 57
+  {':', {2,2,2,1,1,1}},  // 58
+  {'=', {2,1,1,1,1,2}},  // 61  used as break of line character written like '//'
+  {'?', {1,1,2,2,1,1}},  // 63    for character not found
+  {'a', {1,2}},          // 97
+  {'b', {2,1,1,}},       // 98
+  {'c', {2,1,2,1}},      // 99
+  {'d', {2,1,1}},        // 100
+  {'e', {1}},            // 101
+  {'f', {1,1,2,1}},      // 102
+  {'g', {2,2,1}},        // 103
+  {'h', {1,1,1,1}},      // 104
+  {'i', {1,1}},          // 105
+  {'j', {1,2,2,2}},      // 106
+  {'k', {2,1,2}},        // 107
+  {'l', {1,2,1,1}},      // 108
+  {'m', {2,2}},          // 109
+  {'n', {2,1}},          // 110
+  {'o', {2,2,2}},        // 111
+  {'p', {1,2,2,1}},      // 112
+  {'q', {2,2,1,2}},      // 113
+  {'r', {1,2,1}},        // 114
+  {'s', {1,1,1}},        // 115
+  {'t', {2}},            // 116
+  {'u', {1,1,2}},        // 117
+  {'v', {1,1,1,2}},      // 118
+  {'w', {1,2,2}},        // 119
+  {'x', {2,1,1,2}},      // 120
+  {'y', {2,1,2,2}},      // 121
+  {'z', {2,2,1,1}},      // 122
+};
 

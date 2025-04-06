@@ -4,6 +4,7 @@ bool my_debug = false;
 
 uint8_t i2c_bus_num = 0;
 
+/*
 char SHOW_COMMANDS  = 'c';  // show page with commands
 char KEY_SPEED_INCR = 'i';  //increase morse speed
 char KEY_SPEED_DECR = 'd';  // decrease morse speed
@@ -11,6 +12,19 @@ char KEY_FLIP_SPEAKER = 's'; // flip the use_speaker flag
 char MORSE_GO = 'g'; // command to start the sending of morse code
 char MORSE_END = 'e'; // command to stop the sending of morse code
 char KEY_RESET = 'r'; // command to reset the destination device
+*/
+
+enum Command {
+  SHOW_COMMANDS = 'c',
+  SPEAKER_ON_OFF = 's',
+  MORSE_GO = 'g',
+  MORSE_END = 'e',
+  KEY_RESET = 'r',
+  KEY_SPEED_DECR = 'd',
+  KEY_SPEED_INCR = 'i'
+};
+
+char cmd_ltrs[] = {'c', 'd', 'e', 'g', 'i', 'r', 's'};
 
 uint8_t SPEED_IDX_MINIMUM = 0;
 uint8_t SPEED_IDX_MAXIMUM = 8;

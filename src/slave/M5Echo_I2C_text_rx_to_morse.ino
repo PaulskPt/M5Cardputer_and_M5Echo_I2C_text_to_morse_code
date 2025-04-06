@@ -81,7 +81,7 @@ unsigned long start_t = millis();
 ATOMECHOSPKR echoSPKR;  // Create an instance of the ATOMECHOSPKR class
 // +-------+-----------+-------------+-----------+
 // | var   |  milli-   | morse speed | set speed |
-// |       |  sonds    | (wpm)       | code 
+// |       |  sonds    | (wpm)       | code      |
 // +-------+-----------+-------------+-----------+
 // | dly1  |    20     |    54       |  8        |
 // +-------+-----------+-------------+-----------+
@@ -105,95 +105,7 @@ uint8_t rx_code_speed = 5; // default morse code speed index (rcvd fm M5Cardpute
 uint16_t dly1 = 50;       // unit delay
 uint16_t dly3 = dly1 * 3; // character delay
 uint16_t dly7 = dly1 * 7; // word delay
-
 int debounce_delay = 100; // mSec
-
-// Define two beep tones
-beep tone_dot = 
-{
-  .freq    = 1200,
-  .time_ms = 100,
-  .maxval  = 10000,
-  .modal   = true
-};
-
-beep tone_dash = 
-{
-  .freq    = 1200,
-  .time_ms = 300,
-  .maxval  = 10000,
-  .modal   = true
-};
-
-
-// First tone for M5 Echo button press
-beep btn_tone1 = 
-{
-  .freq    = 1200,
-  .time_ms = 100,
-  .maxval  = 10000,
-  .modal   = false
-};
-
-// Second tone for M5 Echo button press
-beep btn_tone2 = 
-{
-  .freq    = 1400,
-  .time_ms = 100,
-  .maxval  = 10000,
-  .modal   = false
-};
-
-// Define the morse code, dot-dash sequences for 
-// the characters that are in the text string to send in morse code
-// Example: in the array {1,2}, the 1 represents a dot, the 2 a dash.
-std::unordered_map<char, std::vector<int>> morse_txt_dict = {
-  //                     decimal:
-  {'\"', {1,2,1,1,2,1}}, // 34 <">
-  {',', {2,2,1,1,2,2}},  // 44
-  {'.', {1,2,1,2,1,2}},  // 46
-  {'/', {2,1,1,2,1}},    // 47
-  {'0', {2,2,2,2,2}},    // 48       = 30 HEX
-  {'1', {1,2,2,2,2}},    // 49
-  {'2', {1,1,2,2,2}},    // 50
-  {'3', {1,1,1,2,2}},    // 51
-  {'4', {1,1,1,1,2}},    // 52
-  {'5', {1,1,1,1,1}},    // 53
-  {'6', {2,1,1,1,1}},    // 54
-  {'7', {2,2,1,1,1}},    // 55
-  {'8', {2,2,2,1,1}},    // 56
-  {'9', {2,2,2,2,1}},    // 57
-  {':', {2,2,2,1,1,1}},  // 58
-  {'=', {2,1,1,1,1,2}},  // 61  used as break of line character written like '//'
-  {'?', {1,1,2,2,1,1}},  // 63    for character not found
-  {'a', {1,2}},          // 97
-  {'b', {2,1,1,}},       // 98
-  {'c', {2,1,2,1}},      // 99
-  {'d', {2,1,1}},        // 100
-  {'e', {1}},            // 101
-  {'f', {1,1,2,1}},      // 102
-  {'g', {2,2,1}},        // 103
-  {'h', {1,1,1,1}},      // 104
-  {'i', {1,1}},          // 105
-  {'j', {1,2,2,2}},      // 106
-  {'k', {2,1,2}},        // 107
-  {'l', {1,2,1,1}},      // 108
-  {'m', {2,2}},          // 109
-  {'n', {2,1}},          // 110
-  {'o', {2,2,2}},        // 111
-  {'p', {1,2,2,1}},      // 112
-  {'q', {2,2,1,2}},      // 113
-  {'r', {1,2,1}},        // 114
-  {'s', {1,1,1}},        // 115
-  {'t', {2}},            // 116
-  {'u', {1,1,2}},        // 117
-  {'v', {1,1,1,2}},      // 118
-  {'w', {1,2,2}},        // 119
-  {'x', {2,1,1,2}},      // 120
-  {'y', {2,1,2,2}},      // 121
-  {'z', {2,2,1,1}},      // 122
-};
-
 size_t rx_bufferSize = 128;
 size_t cw_bufferSize = 128;
 uint8_t *rx_buffer;
@@ -379,64 +291,14 @@ void handle_rx(int8_t nrBytes) {
     return;
   else {
     while(Wire.available()) {
-      value = Wire.read();
+      value = Wire.read();      // Actually receive the I2C data
       if (value >= 0) {
         rx_buffer[rx_buffer_idx] = static_cast<uint8_t>(value);
         rx_buffer_idx += 1;
       }
     }
     if (rx_buffer_idx == 0) 
-      return;
-    else {
-      for (i = 0; i < rx_buffer[i] != '\0'; i++) {
-        if (!my_debug) {
-          value = rx_buffer[i];
-          c = static_cast<char>(rx_buffer[i]); // convert to ASCII      
-          Serial.print(txt0);
-          Serial.print(F("rcvd value = "));
-          if (value < 16)
-            Serial.print(F("0x0"));
-          else
-            Serial.print(F("0x"));
-          Serial.print(value, HEX);
-          Serial.print(F(" = "));
-          // don't print value for codes like:
-          // I2C_DEV_ADDR, RXpacketNr, and type of msg
-          // byte: 0        1    2          3
-          if (rx_buffer[3] == TEXT_MESSAGE && i >= 4)
-            Serial.printf("\'%c\'\n", c);
-
-          switch (i) {
-            case 0:
-              Serial.print(F("I2C address destination: 0x"));
-              Serial.println(value, HEX);
-              break;
-            case 1:
-                Serial.println(F(") PacketNr: "));
-                PacketNr_tmp = static_cast<uint32_t>(value) << 8;
-                break;
-            case 2:
-                PacketNr_tmp |= static_cast<uint32_t>(value);
-                Serial.printf(") %lu\n", PacketNr_tmp);
-                break;
-            case 3:
-              cmdIdx = value - CMD_DO_NOTHING;  // create index to array
-              // Serial.printf("cmdIdx = %d = ", cmdIdx);
-              // erial.printf("length cmd_idx_arr = %d\n", cmd_idx_arr_le);
-              if (cmdIdx >= 0 && cmdIdx < cmd_idx_arr_le) {
-                Serial.println(cmd_idx_arr[cmdIdx]);
-              }
-              break;
-            case 4:
-              if (value == NO_DATA)
-                Serial.println(F("This type of message has no data"));
-              else
-                Serial.println(F("This type of message has data"));
-              break;
-          }
-        }
-      }
-    }
+      return;   // exit when nothing received
   }
 
   Serial.print(txt0);
@@ -566,11 +428,13 @@ bool cpyRXtoCW() {
   return ret;
 }
 
+/*
 void onRequest() {
   Wire.print(TXpacketNr++);
   Wire.print(" Packets.");
   Serial.println("onRequest");
 }
+*/
 
 void onReceive(int howMany) {
   //Wire.readBytes(buffer, howMany);
@@ -578,18 +442,6 @@ void onReceive(int howMany) {
   rx_buffer_howMany = howMany;
   receiveFlag = true;
 }
-
-/*
-void I2C_ack() {
-    // Acknowledge text to send
-    int val = (receiveFlag == true) ? 1 : 0;
-
-    Wire.beginTransmission();  // Transmit to the Master device
-
-    Wire.write(val);             // Sends value byte
-    Wire.endTransmission();      // Stop transmitting
-}
-*/
 
 void LedColor(my_colors color)
 {
@@ -628,37 +480,6 @@ void btn_beep() {
   LedColor(RED);
 }
 
-/* 
-   The unit of morse code speed is the number of times
-   the word "paris" is sent in morse code per minute.
-   A speed of morse code of 16 words per minute is equal to
-   sending the word "paris" 16 times per minute.
-
-   Morse code counting:
-   +-----------------+--------+
-   | what:           | units: |
-   +-----------------+--------+
-   | dot             |    1   |
-   +-----------------+--------+
-   | dot-dash space  |    1   |
-   +-----------------+--------+
-   | dash            |    3   |
-   +-----------------+--------+
-   | character space |    3   |
-   +-----------------+--------+
-   | word space      |    7   |
-   +---------------.-+--------+
-
-         The length of the word "paris" in morse code units (see table above) is: 
-         0             1               2               3               4             5
-         1 2 345 6 789 0 1 234 5 6 789 012 3 4 567 8 9 012 2 4 5 678 9 0 1 2 3 4567890 
-                 p        /   /   a   /   /     r     /   /  i  /   /    s    /       /
-         ./~/---/~/---/~/./~~~/./~/---/~~~/./~/---/~/./~~~/./~/./~~~/./~/./~/./~~~~~~~/  
-                 11       / 3 /   5   / 3 /     7     / 3 /  3  / 3 /    5    /   7   /  = 50 units 
-         1,1,123,1,223,1,2/123/1,1,123/123/1,1,123,1,2/123/1,1,2/123/1,1,2,1,3/1234567/
-      ____/\________             ______/\_______                             ____/\____
-      dot/dash space             character space                             word space
-*/
 void send_morse() {
   // Define variables:
   static constexpr const char txt0[] PROGMEM = "send_morse(): ";
@@ -731,9 +552,9 @@ void send_morse() {
     const char tmp[] = "paris ";
     cw_buffer_idx = strlen(tmp); // was: tmp.length()+1; // +1 for null terminator
     Serial.print(txt0);
-    Serial.print(F("going to send \'"));
+    Serial.print(F("going to send \""));
     Serial.print(tmp);
-    Serial.print(F("\', length = "));
+    Serial.print(F("\", length = "));
     Serial.println(cw_buffer_idx);
     if (cw_buffer == NULL)
       if (!create_cw_buffer())
@@ -745,7 +566,6 @@ void send_morse() {
     Serial.print(txt0);
     Serial.print(F("contents cw_buffer = "));
     Serial.printf("\"%.*s\"\n", cw_buffer_idx, (char *)&cw_buffer[0]);
-    
   }
   if (my_debug) {
     Serial.println(F("Going to send the text now..."));
@@ -859,7 +679,6 @@ void send_morse() {
                 //Serial.printf("tone_dot.modal = %d\n", tone_dot.modal);
                 unit_count += 1;
                 writeSize = echoSPKR.playBeep(tone_dot);
-
                 //echoSPKR.playBeep(tone_dot.freq, tone_dot.time_ms, tone_dot.maxval, tone_dot.modal);
               }
               // if (writeSize > 0) {
@@ -999,9 +818,8 @@ void setup() {
     Serial.println(txts[8]);
   }
   Wire.onReceive(onReceive);
-  Wire.onRequest(onRequest);
+  // Wire.onRequest(onRequest);
 
-  //Wire.begin(GROVE_SDA, GROVE_SCL);
   result = Wire.begin((uint8_t)I2C_DEV_ADDR);
   if (result == false) {
     Serial.print(txt0);
@@ -1013,7 +831,6 @@ void setup() {
     Serial.print(F("Successfully connected onto I2C bus nr: "));
     Serial.printf("%d.\n", i2c_bus_num);
     I2C_active = true;
-    // I2C_ScannerWire();
   }
 
   esp_err_t err = ESP_OK;
@@ -1043,47 +860,6 @@ void cleanup() {
   cmd_reset_flag = false;
   rcvd_message_flag = false;
   rcvd_set_speed_flag = false;
-}
-
-void I2C_ScannerWire() {
-  static constexpr const char txt0[] PROGMEM = "I2C_ScannerWire(): ";
-  byte error;
-  uint8_t address;
-  uint8_t nDevices;
-
-  Serial.print(txt0);
-  Serial.println(F("Scanning for I2C devices..."));
-
-  nDevices = 0;
-  for(address = 0x0; address < 0x7F; address++ )
-  {
-    Serial.print(txt0);
-    Serial.print(F("scanning address: "));
-    Serial.printf("0x%02x\n", address);
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-
-    if (error == 0)
-    {
-      Serial.print(F("I2C device found at address: "));
-      Serial.printf("0x%02x", address);
-      Serial.println(" !");
-      I2C_active = true;
-      nDevices++;
-      break;
-    }
-    /*
-    else if (error==4)
-    {
-      Serial.print("Unknown error at address: ");
-      Serial.printf("0x%02x\n", address);
-    }
-    */   
-  }
-  if (nDevices == 0)
-    Serial.println("No I2C devices found\n");
-  else
-    Serial.println("done\n");
 }
 
 int8_t poll_I2C() {
@@ -1135,7 +911,6 @@ void loop() {
       cmd_morse_go_flag = false; // reset flag
       cmd_morse_end_flag = false; // same
     }
-
 
     if (rcvd_message_flag == true) {
       Serial.print(txt0);
