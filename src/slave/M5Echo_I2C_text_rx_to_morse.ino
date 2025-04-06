@@ -79,32 +79,7 @@ enum my_colors {RED=0, GREEN, BLUE, WHITE, BLACK};
 unsigned long start_t = millis();
 
 ATOMECHOSPKR echoSPKR;  // Create an instance of the ATOMECHOSPKR class
-// +-------+-----------+-------------+-----------+
-// | var   |  milli-   | morse speed | set speed |
-// |       |  sonds    | (wpm)       | code      |
-// +-------+-----------+-------------+-----------+
-// | dly1  |    20     |    54       |  8        |
-// +-------+-----------+-------------+-----------+
-// | dly1  |    30     |    35       |  7        |
-// +-------+-----------+-------------+-----------+
-// | dly1  |    40     |    26       |  6        |
-// +-------+-----------+-------------+-----------+
-// | dly1  |    50     |    18       |  5        |
-// +-------+-----------+-------------+-----------+
-// | dly1  |    60     |    17       |  4        |
-// +-------+-----------+-------------+-----------+
-// | dly1  |    70     |    15       |  3        |
-// +-------+-----------+-------------+-----------+
-// | dly1  |    80     |    13       |  2        |
-// +-------+-----------+-------------+-----------+
-// | dly1  |    90     |    12       |  1        |
-// +-------+-----------+-------------+-----------+
-// | dly1  |   100     |    10       |  0        |
-// +-------+-----------+-------------+-----------+
-uint8_t rx_code_speed = 5; // default morse code speed index (rcvd fm M5Cardputer)
-uint16_t dly1 = 50;       // unit delay
-uint16_t dly3 = dly1 * 3; // character delay
-uint16_t dly7 = dly1 * 7; // word delay
+
 int debounce_delay = 100; // mSec
 size_t rx_bufferSize = 128;
 size_t cw_bufferSize = 128;
@@ -127,8 +102,11 @@ uint32_t RXpacketNr = 0;
 
 const int tone_time_lst[] = {40, 60, 80, 100, 120, 140, 160, 180, 200};
 int le_tone_time_lst = sizeof(tone_time_lst)/sizeof(tone_time_lst[0]);
-int tone_time_lst_idx = 4; // index to 120 (default)
-int blu_last_value, red_last_value = 0;
+uint8_t default_speed = 4;
+uint8_t new_speed_idx = default_speed; // default morse code speed index (rcvd fm M5Cardputer)
+uint16_t dly1 = tone_time_lst[default_speed]/2;  // unit delay
+uint16_t dly3 = dly1 * 3; // character delay
+uint16_t dly7 = dly1 * 7; // word delay
 
 void go_restart() {
   Serial.println(F("Going to restart in 5 seconds..."));
@@ -221,30 +199,28 @@ void set_speed() {
   rcvd_set_speed_flag = false; // reset flag
 
   static constexpr const char txt0[] PROGMEM = "set_speed(): ";
-  static constexpr const char txt1[] PROGMEM = "tone_time_list_idx changed to: ";
+  static constexpr const char txt1[] PROGMEM = "speed index changed to: ";  // was: tone_time_list_idx changed to
   
   int tone_dly1 = 100;
   int unit_dly1 = 50;
 
-  if (rx_code_speed >= 0 && rx_code_speed <= le_tone_time_lst-1) {
-    tone_time_lst_idx = rx_code_speed;
-  } else {
-    tone_time_lst_idx = 4; // set to default
-  }
-
+  if (new_speed_idx < 0 || new_speed_idx >= le_tone_time_lst)
+    new_speed_idx = default_speed; // set to default
+  
   tone_dly1 = tone_dot.time_ms;
   unit_dly1 = dly1;
 
   if (my_debug) {
-    Serial.printf("tone_time_lst_idx = %d, le_tone_time_lst-1 = %d, tone_time_lst[%d] = %d\n", 
-      tone_time_lst_idx, le_tone_time_lst-1, tone_time_lst_idx, tone_time_lst[tone_time_lst_idx]);
+    Serial.print(txt0);
+    Serial.printf("new_speed_idx = %d, le_tone_time_lst-1 = %d, tone_time_lst[%d] = %d\n", 
+      new_speed_idx, le_tone_time_lst-1, new_speed_idx, tone_time_lst[new_speed_idx]);
   }
 
   Serial.print(txt0);
   Serial.print(txt1);
-  Serial.printf("%d\n", tone_time_lst_idx);
+  Serial.printf("%d\n", new_speed_idx);
   
-  tone_dly1 = tone_time_lst[tone_time_lst_idx];
+  tone_dly1 = tone_time_lst[new_speed_idx];
   unit_dly1  = tone_dly1/2;
 
   tone_dot.time_ms = tone_dly1;
@@ -270,7 +246,6 @@ void handle_rx(int8_t nrBytes) {
   uint8_t cmdIdx;
   uint8_t i;
   uint8_t dest_address;
-  uint8_t new_speed_idx;
   uint8_t rx_msg_len;
   uint32_t PacketNr_tmp;
   int value;
@@ -354,7 +329,6 @@ void handle_rx(int8_t nrBytes) {
   
     if (rcvd_set_speed_flag) {        
       new_speed_idx = rx_buffer[4];
-      rx_code_speed = new_speed_idx;
       Serial.print(txt0);
       Serial.print(F("New speed index: "));
       Serial.printf("%d", new_speed_idx);
@@ -775,6 +749,12 @@ void setup() {
     txts[2], txts[3], txts[4], 
     txts[5], txts[2], txts[6],
     txts[7] );
+
+  Serial.print(txt0);
+  Serial.print(F("morse default speed index = "));
+  Serial.println(new_speed_idx);
+  show_delays();
+  Serial.println();
 
   delay(3000); // wait before doing other things
 
