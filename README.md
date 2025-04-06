@@ -220,7 +220,7 @@ ended). When othere types of messages are received they will be ignored in that 
 sending of the morse code will continue, using the contents of the cw_buffer (because the rx_buffer meanwhile
 has been filled with data from a new message).
 
-The sketch for the slave contains a table for the conversion from ASCII to code to send morse dots and dashes.
+The include file "puter_echo.h" for the slave device contains a table for the conversion from ASCII to code to send morse dots and dashes.
 
 ```
 std::unordered_map<char, std::vector<int>> morse_txt_dict = {
@@ -315,7 +315,7 @@ send_morse(): CMD morse end recived. Exiting function.
 ```
 
 Change of the speed of the sending of the morse code is done by setting the
-value of variable "speed_idx". The value of this variable will be changed 
+value of variable "new_speed_idx". The value of this variable will be changed 
 after receiving of a CMD_SPEED_CHG message from the master device,
 in which the value for "new_speed_idx" will be sent as data.
 See function "handle_rx()". 
@@ -334,7 +334,7 @@ The table below show the arbitrary measured speeds.
  +-----------+-------+-----------+-------------+
  |     3     | dly1  |    70     |    15       |
  +-----------+-------+-----------+-------------+
- |     4     | dly1  |    60     |    17       |  \<\< default
+ |     4     | dly1  |    60     |    17       |  <<== default
  +-----------+-------+-----------+-------------+
  |     5     | dly1  |    50     |    18       |
  +-----------+-------+-----------+-------------+
