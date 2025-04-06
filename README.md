@@ -73,7 +73,7 @@ morse code audio through its loudspeaker. In this moment there are the following
 
 OTHER COMMANDS:
 
-  Beside the command message for the slave device, there is are two commands used for the master device.
+  Beside the messages containing commands for the slave device, there are two commands that are meant for the master device ("ctrl + c" and "ctrl + s).
   
   All commands are of the following key combination: "\<ctrl\> + \<key\>"  :
   
