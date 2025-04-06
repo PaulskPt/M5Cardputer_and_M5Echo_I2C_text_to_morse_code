@@ -73,7 +73,9 @@ morse code audio through its loudspeaker. In this moment there are the following
 
 OTHER COMMANDS:
 
-  Beside the messages containing commands for the slave device, there are two commands that are meant for the master device ("ctrl + c" and "ctrl + s).
+  Beside the messages containing commands for the slave device,
+  
+  there are two commands that are meant for the master device ("ctrl + c" and "ctrl + s").
   
   All commands are of the following key combination: "\<ctrl\> + \<key\>"  :
   
@@ -198,12 +200,12 @@ MORSE SEND FUNCTION
          The length of the word "paris" in morse code units (see table above) is: 
          0             1               2               3               4             5
          1 2 345 6 789 0 1 234 5 6 789 012 3 4 567 8 9 012 2 4 5 678 9 0 1 2 3 4567890 
-                 p        /   /   a   /   /     r     /   /  i  /   /    s    /       /
-         ./~/---/~/---/~/./~~~/./~/---/~~~/./~/---/~/./~~~/./~/./~~~/./~/./~/./~~~~~~~/  
-                 11       / 3 /   5   / 3 /     7     / 3 /  3  / 3 /    5    /   7   /  = 50 units 
-         1,1,123,1,223,1,2/123/1,1,123/123/1,1,123,1,2/123/1,1,2/123/1,1,2,1,3/1234567/
+                 p        |   |   a   |   |     r     |   |  i  |   |    s    |       |
+         .|~|---|~|---|~|.|~~~|.|~|---|~~~|.|~|---|~|.|~~~|.|~|.|~~~|.|~|.|~|.|~~~~~~~|  
+                 11       | 3 |   5   | 3 |     7     | 3 |  3  | 3 |    5    |   7   |  = 50 units 
+         1,1,123,1,223,1,2|123|1,1,123|123|1,1,123,1,2|123|1,1,2|123|1,1,2,1,3|1234567|
       ____/\________             ______/\_______                             ____/\____
-      dot/dash space             character space                             word space
+      dot|dash space             character space                             word space
 
 ```
 
