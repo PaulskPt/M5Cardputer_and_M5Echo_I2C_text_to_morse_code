@@ -99,8 +99,7 @@ bool cmd_morse_end_flag = false;
 bool cmd_reset_flag = false;
 uint32_t TXpacketNr = 0;
 uint32_t RXpacketNr = 0;
-
-const int tone_time_lst[] = {40, 60, 80, 100, 120, 140, 160, 180, 200};
+const int tone_time_lst[] =   {200, 180, 160, 140, 120, 100,  80,  60,  40};
 int le_tone_time_lst = sizeof(tone_time_lst)/sizeof(tone_time_lst[0]);
 uint8_t default_speed = 4;
 uint8_t new_speed_idx = default_speed; // default morse code speed index (rcvd fm M5Cardputer)
@@ -201,14 +200,14 @@ void set_speed() {
   static constexpr const char txt0[] PROGMEM = "set_speed(): ";
   static constexpr const char txt1[] PROGMEM = "speed index changed to: ";  // was: tone_time_list_idx changed to
   
-  int tone_dly1 = 100;
-  int unit_dly1 = 50;
+  int tone_dly1 = tone_time_lst[default_speed];  // set default
+  int unit_dly1 = tone_dly1 / 2;                 // temporary was: dly1_lst[default_speed];       // same
 
   if (new_speed_idx < 0 || new_speed_idx >= le_tone_time_lst)
     new_speed_idx = default_speed; // set to default
   
-  tone_dly1 = tone_dot.time_ms;
-  unit_dly1 = dly1;
+  //tone_dly1 = tone_dot.time_ms;
+  //unit_dly1 = dly1;
 
   if (my_debug) {
     Serial.print(txt0);
@@ -221,7 +220,7 @@ void set_speed() {
   Serial.printf("%d\n", new_speed_idx);
   
   tone_dly1 = tone_time_lst[new_speed_idx];
-  unit_dly1  = tone_dly1/2;
+  unit_dly1 = tone_dly1 / 2;  // was temporarily: dly1_lst[new_speed_idx];
 
   tone_dot.time_ms = tone_dly1;
   tone_dash.time_ms = 3 * tone_dot.time_ms; // keep ratio 3 : 1
