@@ -449,10 +449,13 @@ class ATOMECHOSPKR {
     size_t playBeep(int __freq = 2000, int __timems = 200, int __maxval = 10000,
                     bool __modal = false);
     void setVolume(int volume);  // Added by @PaulskPt
+    int getVolume(); // added by @PaulskPt
 
    private:
     size_t _rate      = 44100;
     size_t listLength = 0;
+    int spkr_volume = 8; // was defined in ATOMECHOSPKR::begin() moved to here by @PaulskPt
+    //                      to use it in function getVolume() (by @PaulskPt)
 };
 
 #endif

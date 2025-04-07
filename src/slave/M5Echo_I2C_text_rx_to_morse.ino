@@ -192,17 +192,20 @@ void show_delays() {
 void set_volume() {
   static constexpr const char txt0[] PROGMEM = "set_volume(): ";
   static constexpr const char txt1[] PROGMEM = "volume (0-10) ";
-  volume_idx++;  // increase volume index
+  speaker_volume++;  // increase volume index
   Serial.print(txt0);
   Serial.print(txt1);
-  if (volume_idx > VOLUME_MAX) {
-    volume_idx = 0;
+  if (speaker_volume > VOLUME_MAX) {
+    speaker_volume = 0;
     Serial.print(F("maximum reached. Reset to minimum: "));
   } else {
     Serial.print(F("increased to: "));
   }
-  Serial.println(volume_idx);
-  echoSPKR.setVolume(volume_idx); // call the setVolume function of the speaker driver
+  Serial.println(speaker_volume);
+  echoSPKR.setVolume(speaker_volume); // call the setVolume function of the speaker driver
+  // int speaker_volume_ck = echoSPKR.getVolume();
+  // Serial.print(F("volume setting check: volume is set to: "));
+  // Serial.println(speaker_volume_ck);
 }
 
 void set_speed() {
@@ -841,6 +844,7 @@ void setup() {
     go_restart();
   }
   // set_volume();  // set speaker volume to default <<== Is not necessary! echoSPKR.begin() does this already!
+  speaker_volume = echoSPKR.getVolume(); // get the volume setting from the speaker driver
 
   // delay(100);
 }

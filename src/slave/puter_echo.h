@@ -17,7 +17,7 @@ char VOLUME = 'v';                // command to increase the volume of the slave
 #define VOLUME_DEFAULT 0
 #define VOLUME_MAX 10
 
-uint8_t volume_idx = 0;
+int speaker_volume = 0; // set in setup() by call to echoSPKR::getVolume()
 
 uint8_t speed_default = 4;
 uint8_t SPEED_IDX_MINIMUM = 0;
