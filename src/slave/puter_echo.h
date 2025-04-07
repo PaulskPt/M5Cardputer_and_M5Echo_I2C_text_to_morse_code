@@ -6,18 +6,26 @@ bool my_debug = false;
 
 uint8_t i2c_bus_num = 0;
 
-char KEY_SPEED_INCR = 'i';  //increase morse speed
-char KEY_SPEED_DECR = 'd'; // decrease morse speed
+char KEY_SPEED_INCR = 'i';        //increase morse speed
+char KEY_SPEED_DECR = 'd';        // decrease morse speed
 char KEY_FLIP_SPEAKER_FLAG = 's'; // flip the use_speaker flag
-char MORSE_GO = 'g'; // command to start the sending of morse code
-char MORSE_END = 'e'; // command to stop the sending of morse code
-char KEY_RESET = 'r'; // command to reset the destination device
+char MORSE_GO = 'g';              // command to start the sending of morse code
+char MORSE_END = 'e';             // command to stop the sending of morse code
+char KEY_RESET = 'r';             // command to reset the slave device
+char VOLUME = 'v';                // command to increase the volume of the slave device
 
+#define VOLUME_DEFAULT 0
+#define VOLUME_MAX 10
+
+uint8_t volume_idx = 0;
+
+uint8_t speed_default = 4;
 uint8_t SPEED_IDX_MINIMUM = 0;
 uint8_t SPEED_IDX_MAXIMUM = 8;
 
-static constexpr const char cmd_idx_arr[][15] = {"CMD_DO_NOTHING", "CMD_RESET", "CMD_MORSE_GO", \
-                                                        "CMD_MORSE_END", "CMD_SPEED_CHG", "TEXT_MESSAGE" };
+const uint8_t cmd_idx_arr_elem_size = 15;
+static constexpr const char cmd_idx_arr[][cmd_idx_arr_elem_size] = {"CMD_DO_NOTHING", "CMD_RESET", "CMD_MORSE_GO", 
+                                                  "CMD_MORSE_END",  "CMD_SPEED_CHG", "TEXT_MESSAGE", "CMD_VOLUME_CHG"};
 
 #define CMD_DO_NOTHING      200  // = 0xC8 = Dummy command
 #define CMD_RESET           201  // = 0xC9 = Reset (ESP.restart())
@@ -25,7 +33,7 @@ static constexpr const char cmd_idx_arr[][15] = {"CMD_DO_NOTHING", "CMD_RESET", 
 #define CMD_MORSE_END       203  // = 0xCB = Stop sending morse
 #define CMD_SPEED_CHG       204  // = 0xCC = Morse speed change
 #define TEXT_MESSAGE        205  // = 0xCD = Text message
-
+#define CMD_VOLUME_CHG      206  // = 0xCE = Set volume of M5Echo
 
 #define NO_DATA             250  // = 0xFA = indicates the command has no data (e.g.: CMD_MORSE_GO), 
                                  // however a CMD_SPEED_CHG has data: an index value.

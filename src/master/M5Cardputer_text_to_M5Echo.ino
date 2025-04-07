@@ -101,6 +101,7 @@ M5Canvas canvas(&M5Cardputer.Display);
 
 String data = "> ";
 size_t rx_bufferSize = 128;
+uint8_t speed_idx = speed_default;
 uint8_t *rx_buffer;
 uint8_t rx_buffer_howMany = 0;
 bool use_speaker = false;
@@ -113,7 +114,7 @@ bool morse_end_flag = false;
 bool key_reset_flag = false;
 bool decrease_pressed = false;
 bool increase_pressed = false;
-int8_t speed_idx = 3;  // default morse speed for M5Echo
+bool volume_echo_flag = false;
 
 unsigned long start_t = millis();
 unsigned long curr_t = 0;
@@ -453,6 +454,8 @@ void send_text_msg() {
   uint8_t le_message;
   uint8_t *message;
   uint8_t message_bufferSize = 6;
+  String s1;
+  String s2;
 
   if (my_debug) {
     Serial.print(txt0);
@@ -472,64 +475,64 @@ void send_text_msg() {
   message[2] = TXpacketNr & 0xFF; // put LSB of uint16_t
   message[3] = cmd_idx;
 
-  Serial.print(txt0);
-  if (cmd_idx >= CMD_DO_NOTHING && cmd_idx <= TEXT_MESSAGE) {
+  uint8_t le_cmd_arr = sizeof(cmd_idx_arr) / sizeof(cmd_idx_arr[0]);
+  if (my_debug) {
+    Serial.print(txt0);
+    Serial.print(F("le_cmd_arr = "));
+  }
+  uint8_t tmp_idx = cmd_idx - CMD_DO_NOTHING;
+
+  if (tmp_idx >= le_cmd_arr) {
+    Serial.print(txt0);
+    Serial.print(F("Error: tmp_idx is out of bounds! tmp_idx = "));
+    Serial.print(tmp_idx);
+    Serial.println(F(". Exiting function."));
+    return;
+  }
+  else { // (cmd_idx >= CMD_DO_NOTHING && tmp_idx < le_cmd_arr) {
     if (my_debug) {
-      uint8_t tmp_idx = cmd_idx - CMD_DO_NOTHING;
-      Serial.printf("tmp_idx = %d, in string = \"%s\"\n", tmp_idx, cmd_idx_arr[tmp_idx]);
+      Serial.printf("tmp_idx = %d = \"%s\"\n", tmp_idx, cmd_idx_arr[tmp_idx]);
     }
-  
-    if ((cmd_idx == CMD_DO_NOTHING) || (cmd_idx == CMD_RESET) || (cmd_idx == CMD_MORSE_GO) || (cmd_idx == CMD_MORSE_END)) {
+
+    // Debug addition advised by Ms Copilot
+    /*
+    Serial.print(txt0);
+    Serial.printf("Memory address of cmd_idx_arr[%d]: %p\n", tmp_idx, cmd_idx_arr[tmp_idx]);
+    */
+    // end of addition
+
+    char buffer[cmd_idx_arr_elem_size] = {0};  // Initialize with zeros
+    strncpy(buffer, cmd_idx_arr[tmp_idx], cmd_idx_arr_elem_size - 1);
+    s1 = buffer;
+    //s1 = "CMD_VOLUME_CHG";  // Hardcoded for testing
+
+
+    if ((cmd_idx == CMD_DO_NOTHING) || (cmd_idx == CMD_RESET) || \
+      (cmd_idx == CMD_MORSE_GO) || (cmd_idx == CMD_MORSE_END) || (cmd_idx == CMD_VOLUME_CHG)) {
       message[4] = NO_DATA;
     } else {
       message[4] = CMD_IDX_TODO;
     }
-  } else {
-    Serial.print(txt0);
-    Serial.print(F("value of cmd_idx is out of bounds. Value = "));
-    Serial.println(cmd_idx);
-    message[4] = NO_DATA;
   }
   message[5] = '\0';
   le_message=6; // was: =sizeof(message)/sizeof(message[0]) + 1;
 
-  String s1;
-  switch (message[3]) {
-    case CMD_DO_NOTHING:
-      s1 = "CMD_DO_NOTHING";
-      break;
-    case CMD_RESET:
-      s1 = "CMD_RESET";
-      break;
-    case CMD_MORSE_GO:
-      s1 = "CMD_MORSE_GO";
-      break;
-    case CMD_MORSE_END:
-      s1 = "CMD_MORSE_END";
-      break;
-    case CMD_SPEED_CHG:
-      s1 = "CMD_SPEED_CHG";
-      break;
-  }
-  
-  Serial.print(txt0);
-  String s2;
   if (message[4] == NO_DATA)
     s2 = "NO_DATA";
   else if (message[4] == CMD_IDX_TODO)
     s2 = "CMD_IDX_TODO";
   else
     s2 = "";
-
-  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, cmd = %s, data = \"%s\"\n", 
-              message[0], 
-              (message[1] << 8) | message[2], 
-              s1,
-              s2);
-
+  
   Serial.print(txt0);
-  Serial.print(F("length of message = "));
-  Serial.printf("%d\n", le_message);
+  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, cmd = \"%s\", data = \"%s\"\n", 
+    message[0], ((message[1] << 8) | message[2]), s1.c_str(), s2);
+
+  if (my_debug) {
+    Serial.print(txt0);
+    Serial.print(F("length of message = "));
+    Serial.printf("%d\n", le_message);
+  }
 
   Serial.print(txt0);
   Serial.printf("%s%s%s%s: ", txts[6], txts[7], txts[1], txts[2]);
@@ -541,6 +544,17 @@ void send_text_msg() {
   }
   Serial.printf("0x%02x\n", message[i]);  // Print the NULL terminator
   size_t bytes_sent = 0;
+
+  // Advised by MS Copilot: print all elements of the array
+  // See the %p in the printf(), that's a way to print the memory address of the array element(s)!
+  /*
+  Serial.println(txt0);
+  for (int i = 0; i < sizeof(cmd_idx_arr) / sizeof(cmd_idx_arr[0]); i++) {
+    Serial.printf("cmd_idx_arr[%d] address: %p, value: %s\n", i, cmd_idx_arr[i], cmd_idx_arr[i]);
+  }
+  */
+  // end of addition
+
   Wire.beginTransmission(I2C_DEV_ADDR);
   bytes_sent = Wire.write((uint8_t *)message, le_message);
   Wire.endTransmission(true);
@@ -557,7 +571,7 @@ void send_text_msg() {
   free(message);
 }
 
-void send_speed_chg(int8_t speed_idx) {
+void send_speed_chg(int8_t speed_chg_idx) {
   static constexpr const char txt0[] PROGMEM = "send_speed_chg(): ";
   static constexpr const char *txts[] PROGMEM = {
     "sending ",       // 0
@@ -587,7 +601,7 @@ void send_speed_chg(int8_t speed_idx) {
   message[1] = (TXpacketNr & 0xFF00) >> 8; // put MSB of uint16_t
   message[2] = TXpacketNr & 0xFF; // put LSB of uint16_t
   message[3] = CMD_SPEED_CHG;
-  message[4] = speed_idx;
+  message[4] = speed_chg_idx;
   message[5] = '\0';
   le_message=6; // was: =sizeof(message)/sizeof(message[0]) + 1;
 
@@ -596,7 +610,7 @@ void send_speed_chg(int8_t speed_idx) {
     s = "CMD_SPEED_CHG";
 
   Serial.print(txt0);
-  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, msgType = %s, speed_idx = %d, NULL-terminator\n", 
+  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, msgType = %s, speed_chg_idx = %d, NULL-terminator\n", 
               message[0], 
               (message[1] << 8) | message[2], 
               s,
@@ -699,10 +713,11 @@ void cleanup() {
   morse_go_flag = false;
   morse_end_flag = false;
   key_reset_flag = false;
+  volume_echo_flag = false;
   receiveFlag = false;
   show_commands_flag = false;
   use_speaker = false;
-  speed_idx = 3;
+  speed_idx = speed_default;
 }
 
 bool isDataOnlySpaces() {
@@ -816,6 +831,10 @@ void handle_kbd_input() {
             case KEY_RESET:
               key_reset_flag = true;
               break;
+
+            case VOLUME_CHG:
+              volume_echo_flag = true;
+              break;
         
             case KEY_SPEED_DECR:
               decrease_pressed = true;
@@ -847,7 +866,8 @@ void handle_kbd_input() {
         if (brk2)
           break;
       }  // end-of-for loop
-      if (show_commands_flag || key_reset_flag || morse_go_flag || morse_end_flag || decrease_pressed || increase_pressed) {
+      if (show_commands_flag || key_reset_flag || morse_go_flag || \
+          morse_end_flag || decrease_pressed || increase_pressed || volume_echo_flag) {
         data = "> ";
         ctrl_pressed = false; // reset flag
         if (show_commands_flag)
@@ -873,7 +893,6 @@ void loop() {
     }
 
     if (morse_go_flag) {
-      Serial.println(F("loop(): CMD_MORSE_GO rcvd. Going to call send_cmd()"));
       send_cmd(CMD_MORSE_GO);
       morse_go_flag = false;
     }
@@ -889,6 +908,11 @@ void loop() {
         decrease_pressed = false; // reset
       if (increase_pressed)
         increase_pressed = false; // reset
+    }
+
+    if (volume_echo_flag) {
+      send_cmd(CMD_VOLUME_CHG);
+      volume_echo_flag = false;
     }
   }
 }

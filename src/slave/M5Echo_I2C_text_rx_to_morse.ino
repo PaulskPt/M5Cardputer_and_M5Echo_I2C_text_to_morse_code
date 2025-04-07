@@ -88,7 +88,6 @@ uint8_t *cw_buffer;
 int8_t rx_buffer_howMany = 0;
 int rx_buffer_idx = 0;
 int cw_buffer_idx = 0;
-uint8_t rcvd_cmd_idx = CMD_DO_NOTHING;
 bool I2C_active = false;
 bool receiveFlag = false;
 bool rcvd_cmd_flag = false;
@@ -97,13 +96,13 @@ bool rcvd_message_flag = false;
 bool cmd_morse_go_flag = false;
 bool cmd_morse_end_flag = false;
 bool cmd_reset_flag = false;
+bool cmd_volume_echo_flag = false;
 uint32_t TXpacketNr = 0;
 uint32_t RXpacketNr = 0;
-const int tone_time_lst[] =   {200, 180, 160, 140, 120, 100,  80,  60,  40};
+const int tone_time_lst[] = {200, 180, 160, 140, 120, 100,  80,  60,  40};
 int le_tone_time_lst = sizeof(tone_time_lst)/sizeof(tone_time_lst[0]);
-uint8_t default_speed = 4;
-uint8_t new_speed_idx = default_speed; // default morse code speed index (rcvd fm M5Cardputer)
-uint16_t dly1 = tone_time_lst[default_speed]/2;  // unit delay
+uint8_t new_speed_idx = speed_default; // default morse code speed index (rcvd fm M5Cardputer)
+uint16_t dly1 = tone_time_lst[speed_default]/2;  // unit delay
 uint16_t dly3 = dly1 * 3; // character delay
 uint16_t dly7 = dly1 * 7; // word delay
 
@@ -190,6 +189,22 @@ void show_delays() {
   Serial.printf("dly1: %d, dly3: %d, dly7: %d mSeconds\n", dly1, dly3, dly7);
 }
 
+void set_volume() {
+  static constexpr const char txt0[] PROGMEM = "set_volume(): ";
+  static constexpr const char txt1[] PROGMEM = "volume (0-10) ";
+  volume_idx++;  // increase volume index
+  Serial.print(txt0);
+  Serial.print(txt1);
+  if (volume_idx > VOLUME_MAX) {
+    volume_idx = 0;
+    Serial.print(F("maximum reached. Reset to minimum: "));
+  } else {
+    Serial.print(F("increased to: "));
+  }
+  Serial.println(volume_idx);
+  echoSPKR.setVolume(volume_idx); // call the setVolume function of the speaker driver
+}
+
 void set_speed() {
 
   if (rcvd_set_speed_flag == false)
@@ -200,11 +215,11 @@ void set_speed() {
   static constexpr const char txt0[] PROGMEM = "set_speed(): ";
   static constexpr const char txt1[] PROGMEM = "speed index changed to: ";  // was: tone_time_list_idx changed to
   
-  int tone_dly1 = tone_time_lst[default_speed];  // set default
-  int unit_dly1 = tone_dly1 / 2;                 // temporary was: dly1_lst[default_speed];       // same
+  int tone_dly1 = tone_time_lst[speed_default];  // set default
+  int unit_dly1 = tone_dly1 / 2;                 // temporary was: dly1_lst[speed_default];       // same
 
   if (new_speed_idx < 0 || new_speed_idx >= le_tone_time_lst)
-    new_speed_idx = default_speed; // set to default
+    new_speed_idx = speed_default; // set to default
   
   //tone_dly1 = tone_dot.time_ms;
   //unit_dly1 = dly1;
@@ -291,23 +306,21 @@ void handle_rx(int8_t nrBytes) {
     Serial.printf("RXpacketNr: %u\n", RXpacketNr);
     Serial.print(txt0);
     Serial.print(F("type of command: "));
-    rcvd_cmd_idx = rx_buffer[3];
+    // Serial.printf("rx_buffer[3] = %d = ", rx_buffer[3]);
+    uint8_t cmd_idx = rx_buffer[3] - CMD_DO_NOTHING;
+    Serial.println(cmd_idx_arr[cmd_idx]);
     switch (rx_buffer[3]) {
       case CMD_DO_NOTHING:
-        Serial.println(F("DO NOTING"));
         stop = true;
         break;
       case CMD_RESET:
-        Serial.println(F("CMD_RESET"));
         go_restart();
         break;
       case CMD_MORSE_GO:
-        Serial.println(F("CMD_MORSE_GO (\'paris\')"));
         cmd_morse_go_flag = true;
         cmd_morse_end_flag = false;
         break;
       case CMD_MORSE_END:
-        Serial.println(F("CMD_MORSE_END"));
         cmd_morse_go_flag = false;
         cmd_morse_end_flag = true;
         stop = true;
@@ -317,6 +330,9 @@ void handle_rx(int8_t nrBytes) {
         break;
       case TEXT_MESSAGE:
         rcvd_message_flag = true;
+        break;
+      case CMD_VOLUME_CHG:
+        cmd_volume_echo_flag = true;
         break;
       default:
         Serial.println(F("UNKNOWN CMD. Exiting function.."));
@@ -494,7 +510,6 @@ void send_morse() {
   Serial.printf("%d Hz\n", tone_dot.freq);
   Serial.printf("tone_dot.modal  = %s\n", (tone_dot.modal  == 1) ? "true": "false");
   Serial.printf("tone_dash.modal = %s\n", (tone_dash.modal == 1) ? "true": "false");
-  echoSPKR.setVolume(1);  // Initial volume (in class) set to 8.
   dot_dash_time();
 
   if (!cmd_morse_go_flag && receiveFlag && cw_buffer_idx > 0) {
@@ -825,6 +840,8 @@ void setup() {
     Serial.println(F("occurred."));
     go_restart();
   }
+  // set_volume();  // set speaker volume to default <<== Is not necessary! echoSPKR.begin() does this already!
+
   // delay(100);
 }
 
@@ -833,11 +850,11 @@ void cleanup() {
   freeCWBuffer();
   receiveFlag = false;
   rcvd_cmd_flag = false;
-  rcvd_cmd_idx = CMD_DO_NOTHING;
   cmd_morse_go_flag = false;
   cmd_morse_end_flag = false;
   cmd_reset_flag = false;
   rcvd_message_flag = false;
+  cmd_volume_echo_flag = false;
   rcvd_set_speed_flag = false;
 }
 
@@ -903,6 +920,11 @@ void loop() {
 
     if (rcvd_set_speed_flag == true)
       set_speed();
+
+    if (cmd_volume_echo_flag) {
+      cmd_volume_echo_flag = false;
+      set_volume();
+    }
     
     if (M5.Btn.wasPressed()) {
       Serial.print(txt0);
