@@ -102,10 +102,12 @@ void ECHOspeakerPlayTask(void *arg) {
   }
 }
 
+const char TAG1[] = "ATOMECHOSPKR::";
+
 //was: bool ATOMECHOSPKR::begin(int __rate)
 esp_err_t ATOMECHOSPKR::begin(int __rate)
 {
-  char TAG1[] = "ATOMECHOSPKR::";
+  //char TAG1[] = "ATOMECHOSPKR::";
   char TAG2[] = "begin(): ";
   //Serial.printf("%s%srate = %d\n", TAG1, TAG2, __rate);
 
@@ -306,8 +308,7 @@ void ATOMECHOSPKR::setVolume(int volume)
     // Adjust the volume by setting the I2S DAC output level
     // This is a simplified example; actual implementation may vary
     int16_t sample = volume * 3276; // Scale volume to 16-bit sample
-    Serial.print(F("AtoEchoSPKR::setVolume(): volume = "));
-    Serial.println(volume);
+    Serial.printf("%ssetVolume(): volume = %d\n", TAG1, volume);
     //Serial.print(F(", (int16_t) sample = volume * 3276 = "));
     //Serial.println(sample);
     i2s_write(SPEAKER_I2S_NUMBER, (const char*)&sample, sizeof(sample), &bytes_written, portMAX_DELAY);
