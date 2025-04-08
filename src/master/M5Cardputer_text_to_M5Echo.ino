@@ -610,7 +610,7 @@ void send_speed_chg(int8_t speed_chg_idx) {
     s = "CMD_SPEED_CHG";
 
   Serial.print(txt0);
-  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, msgType = %s, speed_chg_idx = %d, NULL-terminator\n", 
+  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, msgType = %s, data = (speed_chg_idx) = %d, NULL-terminator\n", 
               message[0], 
               (message[1] << 8) | message[2], 
               s,

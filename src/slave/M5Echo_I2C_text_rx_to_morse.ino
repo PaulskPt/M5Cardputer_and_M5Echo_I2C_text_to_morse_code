@@ -227,6 +227,27 @@ void set_volume(uint8_t tone_maxval_idx) {
   tone_dot.maxval  = tmp_maxval;
 }
 
+void speed_lookup() {
+  int morse_speed_current;
+  bool morse_speed_found = false;
+  
+  if (idx_vs_morse_speed.find(static_cast<int>(new_speed_idx)) != idx_vs_morse_speed.end()) { 
+    morse_speed_current = idx_vs_morse_speed[new_speed_idx];
+    morse_speed_found = true;
+  }
+  if (new_speed_idx == speed_default)
+    Serial.print(F("morse default speed index = "));
+  else
+    Serial.print(F("new morse speed index = "));
+  Serial.print(new_speed_idx);
+  Serial.print(F(" equals to: "));
+  if (morse_speed_found)
+    Serial.print(morse_speed_current);
+  else
+    Serial.print("unknown ");
+  Serial.println(F(" words per minute"));
+}
+
 void set_speed() {
 
   if (rcvd_set_speed_flag == false)
@@ -367,9 +388,12 @@ void handle_rx(int8_t nrBytes) {
     if (rcvd_set_speed_flag) {        
       new_speed_idx = rx_buffer[4];
       Serial.print(txt0);
+      /*
       Serial.print(F("New speed index: "));
       Serial.printf("%d", new_speed_idx);
-      Serial.println(F(" received from master device"));
+      */ 
+      speed_lookup();
+      Serial.println(F("received from master device"));
 
       if (new_speed_idx < SPEED_IDX_MINIMUM || new_speed_idx > SPEED_IDX_MAXIMUM) {
         return;
@@ -787,8 +811,26 @@ void setup() {
     txts[7] );
 
   Serial.print(txt0);
+  speed_lookup();
+  /*
+  int morse_speed_current;
+  bool morse_speed_found = false;
+  
+  if (idx_vs_morse_speed.find(static_cast<int>(new_speed_idx)) != idx_vs_morse_speed.end()) { 
+    morse_speed_current = idx_vs_morse_speed[new_speed_idx];
+    morse_speed_found = true;
+  }
+  Serial.print(txt0);
   Serial.print(F("morse default speed index = "));
-  Serial.println(new_speed_idx);
+  Serial.print(new_speed_idx);
+  Serial.print(F(" equals to: "));
+  if (morse_speed_found)
+    Serial.print(morse_speed_current);
+  else
+    Serial.print("unknown ");
+  Serial.println(F(" words per minute"));
+  */
+
   show_delays();
   Serial.println();
 

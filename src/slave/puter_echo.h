@@ -110,6 +110,21 @@ uint8_t maxval_idx = 5;
 #define MAXVAL_DEFAULT  5
 #define MAXVAL_MAXIMUM 10 // Which will result in 10 * 1000 = 10_000 (see function setVolume)
 
+// This map is used to lookup the (practical) speeds of words per minute in morse code,
+// that was estimated by measurements during tests. The key is an index, in the sketch
+// used by the variable name new_speed_idx
+std::unordered_map<int, int> idx_vs_morse_speed = {
+  {0, {10}},
+  {1, {11}},
+  {2, {13}},
+  {3, {15}},
+  {4, {17}},
+  {5, {18}},
+  {6, {26}},
+  {7, {35}},
+  {8, {54}}
+};
+
 // Define the morse code, dot-dash sequences for 
 // the characters that are in the text string to send in morse code
 // Example: in the array {1,2}, the 1 represents a dot, the 2 a dash.
