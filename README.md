@@ -53,6 +53,7 @@ now there is only defined one type of message. The message can contain commands 
 - CMD_RESET
 - CMD_MORSE_GO
 - CMD_MORSE_END
+- CMD_VOLUME_CHG
 
 The only messages that contain data are:
 - the CMD_SPEED_CHG  (morse speed change message, that contains an index value to a speeds array as data);
@@ -68,6 +69,7 @@ morse code audio through its loudspeaker. In this moment there are the following
   -  CMD_MORSE_END (to instruct the M5Echo to end an ongoing sending of morse code. This can be in the case of the default text "paris " or
      another text received from the master device).
   -  CMD_SPEED_CHG, morse speed change;
+  -  CMD_VOLUME_CHG, change the volume of the slave device (0-10). This  is a one-way remote volume control only  0 ~ 10 --> 0. When 0, the speaker will be silenced (OFF, no sound).
   -  TEXT_MESSAGE, a message containing text (to be translated into morse code).
 
 
@@ -96,6 +98,8 @@ OTHER COMMANDS:
   | g | morse go          |  (start sending default text "paris " in morse code)
   +---+-------------------+
   | e | mose end          |  (stop any ongoing sending of morse code)
+  +---+-------------------+
+  | v | volume change     |  (change audio volume of the slave device)
   +---+-------------------+
 
 ```
@@ -151,7 +155,7 @@ and on the bottom line there will appear the prompt: "> ".
 Now the sketch is waiting for your input:
 In case of a text: type the text. End it with a space character and confirm your entry by hitting the \<Enter\> key.
 In case of a command: first press the "ctrl" button (down-left) followed by a letter, one of the letters shown in
-the list of COMMANDS above ({c, i, d, r, s, g, e}). After pressing these two keys, one after the other, the sketch of the Cardputer
+the list of COMMANDS above ({c, i, d, r, s, g, e, v}). After pressing these two keys, one after the other, the sketch of the Cardputer
 will interprete and handle the command given. If it is a command for the M5Echo the M5Cardputer will immediately
 send a command type of message, containing the command you entered, to the M5Echo. My experience is that this goes
 very rapid. On the oscillograms one can see that an I2C command type of message only contains 6 bytes.
@@ -455,5 +459,18 @@ caused the tone for the dash to sound garbled. Also the tone of the ```push butt
 created an global array of integer values: ```const int tone_time_lst[] =   {200, 180, 160, 140, 120, 100,  80,  60,  40};``` which 
 will be used in function ```set_speed()``` to change the value of  ```tone_dot.time_ms```, 
 from which are derived the values of other global variables (see the explanation about morse speed test above).
+
+Update 2025-04-08:
+
+The volume control for the M5Atom Echo is completely changed. The function setVolume in the AtomEchoSPKR driver that I created long before this project,
+did not work. Yesterday, during some experiments, I discovered that changing the value of the item ".maxval" of the four structures: tone_dat, tone_dash, btn_tone1 and btn_tone2,
+has the effect of volume control. The sketches are now changed in such a way that if the user of the master device presses "<ctrl>" followed by "v", the master device will send
+a CMD_VOLUME_CHG message to the slave device, which in turn, on receiving this message sets a flag which will be checked in loop(). When the flag "cmd_volume_echo_flag" is set,
+the function "set_volume()" will be called and the value of the volume index will be increased by 1. When the volume index has reached beyond 10, the value will be reset to 0.
+When the volume index is zero there is no sound ouput from the M5Atom Echo speaker. When the volume index once more is increased to 1, then again audio will be produced from
+the speaker, be it very weak. That was exact my intention because there can be situations that one cannot make loud noises. With this update I also uploaded a new Monitor_output.txt 
+file that shows the new remote volume control functionality.
+
+
 
 
