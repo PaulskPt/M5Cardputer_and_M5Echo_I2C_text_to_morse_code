@@ -189,23 +189,42 @@ void show_delays() {
   Serial.printf("dly1: %d, dly3: %d, dly7: %d mSeconds\n", dly1, dly3, dly7);
 }
 
-void set_volume() {
+void set_volume(uint8_t tone_maxval_idx) {
+  uint16_t tmp_maxval;
   static constexpr const char txt0[] PROGMEM = "set_volume(): ";
   static constexpr const char txt1[] PROGMEM = "volume (0-10) ";
-  speaker_volume++;  // increase volume index
+
+  if (tone_maxval_idx != 255) {
+    if (tone_maxval_idx < MAXVAL_MINIMUM || tone_maxval_idx > MAXVAL_MAXIMUM) {
+      Serial.print(txt0);
+      Serial.print(F("leaving this function because value parameter = "));
+      Serial.println(tone_maxval_idx);
+      return;
+    }
+  }
+
+  if (tone_maxval_idx == 255) {
+    tone_maxval_idx = maxval_idx; // copy value from the global variable
+    tone_maxval_idx++;  // increase volume index
+  }
+
   Serial.print(txt0);
   Serial.print(txt1);
-  if (speaker_volume > VOLUME_MAX) {
-    speaker_volume = 0;
+  if (tone_maxval_idx > MAXVAL_MAXIMUM) {
+    tone_maxval_idx = MAXVAL_MINIMUM;
     Serial.print(F("maximum reached. Reset to minimum: "));
   } else {
     Serial.print(F("increased to: "));
   }
-  Serial.println(speaker_volume);
-  echoSPKR.setVolume(speaker_volume); // call the setVolume function of the speaker driver
-  // int speaker_volume_ck = echoSPKR.getVolume();
-  // Serial.print(F("volume setting check: volume is set to: "));
-  // Serial.println(speaker_volume_ck);
+  maxval_idx = tone_maxval_idx; // update the global value
+  Serial.println(maxval_idx);
+  
+  tmp_maxval = maxval_idx * 1000;
+  // Update all beep tone .maxval values
+  btn_tone1.maxval = tmp_maxval;
+  btn_tone2.maxval = tmp_maxval;
+  tone_dash.maxval = tmp_maxval;
+  tone_dot.maxval  = tmp_maxval;
 }
 
 void set_speed() {
@@ -843,8 +862,6 @@ void setup() {
     Serial.println(F("occurred."));
     go_restart();
   }
-  // set_volume();  // set speaker volume to default <<== Is not necessary! echoSPKR.begin() does this already!
-  speaker_volume = echoSPKR.getVolume(); // get the volume setting from the speaker driver
 
   // delay(100);
 }
@@ -860,6 +877,8 @@ void cleanup() {
   rcvd_message_flag = false;
   cmd_volume_echo_flag = false;
   rcvd_set_speed_flag = false;
+  maxval_idx = MAXVAL_DEFAULT;
+  set_volume(maxval_idx);
 }
 
 int8_t poll_I2C() {
@@ -927,7 +946,9 @@ void loop() {
 
     if (cmd_volume_echo_flag) {
       cmd_volume_echo_flag = false;
-      set_volume();
+      // param value 255 is a kinda flag to use
+      //  the volume increase part of the set_volume function
+      set_volume(255); 
     }
     
     if (M5.Btn.wasPressed()) {

@@ -162,10 +162,9 @@ esp_err_t ATOMECHOSPKR::begin(int __rate)
   {
     return err; // was: return false;
   }
-  // Set initial volume  <<== see AtomEchoSPKR.h class definition - private part
-  // int spkr_volume = 8;
+  int spkr_volume = 8;
   //Serial.printf("%ssetVolume(): setting volume to: %d\n", TAG1, spkr_volume);
-  ATOMECHOSPKR::setVolume(spkr_volume); // Volume level from 0 to 10
+  //ATOMECHOSPKR::setVolume(spkr_volume); // Volume level from 0 to 10
 
   xTaskCreatePinnedToCore(ECHOspeakerPlayTask, "ECHOspeakerPlayTask", 4096, nullptr,
     10, nullptr, 0);
@@ -298,25 +297,21 @@ size_t ATOMECHOSPKR::playBeep(int __freq, int __timems, int __maxval, bool __mod
 
 // This function added by @PaulskPt after consulting MS Copilot, 
 // however, I had to add &bytes_written parameter to the call to i2s_write
-void ATOMECHOSPKR::setVolume(int vol)
+/*
+void ATOMECHOSPKR::setVolume(int volume)
 {
   size_t bytes_written = 0;
-  if (vol < 0)
-    vol = 0;
-  if (vol > 10)
-    vol = 10;
-  spkr_volume = vol; // copy to the global (private) value
+  if (volume < 0)
+    volume = 0;
+  if (volume > 10)
+    volume = 10;
     // Adjust the volume by setting the I2S DAC output level
     // This is a simplified example; actual implementation may vary
-    int16_t sample = vol * 3276; // Scale volume to 16-bit sample
-    Serial.printf("%ssetVolume(): volume = %d\n", TAG1, vol);
+    int16_t sample = volume * 3276; // Scale volume to 16-bit sample
+    //Serial.printf("%ssetVolume(): volume = %d\n", TAG1, volume);
     //Serial.print(F(", (int16_t) sample = volume * 3276 = "));
     //Serial.println(sample);
     i2s_write(SPEAKER_I2S_NUMBER, (const char*)&sample, sizeof(sample), &bytes_written, portMAX_DELAY);
 }
-
-int ATOMECHOSPKR::getVolume()
-{
-  return spkr_volume;
-}
+*/
 

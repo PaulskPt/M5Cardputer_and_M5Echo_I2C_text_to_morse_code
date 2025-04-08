@@ -1,0 +1,238 @@
+Tuesday 2025-04-08 01h13 utc+1
+
+Board: M5Stack M5Cardputer with connected via I2C an M5Stack M5Atom Echo device.
+
+IDE: Arduino v2.3.5
+
+The M5Cardputer is acting as master device in the I2C communication
+Thee M5Atom Echo is acting as slave device.
+
+Arduino sketch in the master: M5Cardputer_text_to_M5Echo.ino
+Arduino sketch in the slave: M5Echo_I2C_text_rx_to_morse.ino
+
+-------------------------------------------
+Serial Monitor output of the master device:
+-------------------------------------------
+
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'v' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14394, cmd = "CMD_VOLUME_CHG", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x3a, 0xce, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'g' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14395, cmd = "CMD_MORSE_GO", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x3b, 0xca, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'e' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14396, cmd = "CMD_MORSE_END", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x3c, 0xcb, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'v' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14397, cmd = "CMD_VOLUME_CHG", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x3d, 0xce, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'v' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14398, cmd = "CMD_VOLUME_CHG", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x3e, 0xce, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'v' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14399, cmd = "CMD_VOLUME_CHG", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x3f, 0xce, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'v' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14400, cmd = "CMD_VOLUME_CHG", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x40, 0xce, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'v' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14401, cmd = "CMD_VOLUME_CHG", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x41, 0xce, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'g' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14402, cmd = "CMD_MORSE_GO", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x42, 0xca, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'e' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14403, cmd = "CMD_MORSE_END", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x43, 0xcb, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'v' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14404, cmd = "CMD_VOLUME_CHG", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x44, 0xce, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'g' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14405, cmd = "CMD_MORSE_GO", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x45, 0xca, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+handle_kbd_input(): <ctrl> pressed
+handle_kbd_input(): <ctrl> + 'e' pressed
+send_cmd(): I2C_DEV_ADDR = 0x55, TXpacketNr = 14406, cmd = "CMD_MORSE_END", data = "NO_DATA"
+send_cmd(): Going to send command message: 0x55, 0x38, 0x46, 0xcb, 0xfa, 0x00
+send_cmd(): command message sent. Number of bytes sent: 6
+
+------------------------------------------
+Serial Monitor output of the slave device:
+------------------------------------------
+M5Stack M5Atom Echo
+I2C test
+to receive text for morse code 
+and to receive speed change commands
+from a M5Stack Cardputer device.
+
+setup(): morse default speed index = 4
+Values for dly1, dly3 and dly7:
+dly1: 60, dly3: 180, dly7: 420 mSeconds
+
+setup(): Board type: M5Atom Echo
+setup(): I2C Pins set successfull.
+setting I2C buffersize to 42 successfull.
+setup(): Successfully connected onto I2C bus nr: 0.
+E (4102) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
+set_volume(): volume (0-10) increased to: 5
+
+loop(): entering the while loop...
+loop(): ESP.getFreeHeap = 302572
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14394
+handle_rx(): type of command: CMD_VOLUME_CHG
+set_volume(): volume (0-10) increased to: 6
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14395
+handle_rx(): type of command: CMD_MORSE_GO
+send_morse(): Starting...
+tone dot (and dash) frequency = 1200 Hz
+tone_dot.modal  = true
+tone_dash.modal = true
+dot_dash_time(): tone_dot.time_ms  set to: 100 mSeconds
+                 tone_dash.time_ms set to: 300 mSeconds
+send_morse(): going to send "paris ", length = 6
+send_morse(): contents cw_buffer = "paris "
+Values for dly1, dly3 and dly7:
+dly1: 60, dly3: 180, dly7: 420 mSeconds
+ 1) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 2) 
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14396
+handle_rx(): type of command: CMD_MORSE_END
+
+send_morse(): CMD_MORSE_END received. Exiting function.
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14397
+handle_rx(): type of command: CMD_VOLUME_CHG
+set_volume(): volume (0-10) increased to: 7
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14398
+handle_rx(): type of command: CMD_VOLUME_CHG
+set_volume(): volume (0-10) increased to: 8
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14399
+handle_rx(): type of command: CMD_VOLUME_CHG
+set_volume(): volume (0-10) increased to: 9
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14400
+handle_rx(): type of command: CMD_VOLUME_CHG
+set_volume(): volume (0-10) increased to: 10
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14401
+handle_rx(): type of command: CMD_VOLUME_CHG
+set_volume(): volume (0-10) maximum reached. Reset to minimum: 0
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14402
+handle_rx(): type of command: CMD_MORSE_GO
+send_morse(): Starting...
+tone dot (and dash) frequency = 1200 Hz
+tone_dot.modal  = true
+tone_dash.modal = true
+dot_dash_time(): tone_dot.time_ms  set to: 100 mSeconds
+                 tone_dash.time_ms set to: 300 mSeconds
+send_morse(): going to send "paris ", length = 6
+send_morse(): contents cw_buffer = "paris "
+Values for dly1, dly3 and dly7:
+dly1: 60, dly3: 180, dly7: 420 mSeconds
+ 1) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 2) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |
+ poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14403
+handle_rx(): type of command: CMD_MORSE_END
+
+send_morse(): CMD_MORSE_END received. Exiting function.
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14404
+handle_rx(): type of command: CMD_VOLUME_CHG
+set_volume(): volume (0-10) increased to: 1
+
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14405
+handle_rx(): type of command: CMD_MORSE_GO
+send_morse(): Starting...
+tone dot (and dash) frequency = 1200 Hz
+tone_dot.modal  = true
+tone_dash.modal = true
+dot_dash_time(): tone_dot.time_ms  set to: 100 mSeconds
+                 tone_dash.time_ms set to: 300 mSeconds
+send_morse(): going to send "paris ", length = 6
+send_morse(): contents cw_buffer = "paris "
+Values for dly1, dly3 and dly7:
+dly1: 60, dly3: 180, dly7: 420 mSeconds
+ 1) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 2) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 3) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 4) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+
+ 5) .|1|---|1|---|1|.| 3 |
+poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
+handle_rx(): received nr of bytes: 6
+handle_rx(): rcvd correct destination address: 0x55
+handle_rx(): RXpacketNr: 14406
+handle_rx(): type of command: CMD_MORSE_END
+
+send_morse(): CMD_MORSE_END received. Exiting function.
+
+------------------------------------------

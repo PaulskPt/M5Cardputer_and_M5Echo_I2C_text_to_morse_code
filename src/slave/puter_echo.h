@@ -102,6 +102,14 @@ beep btn_tone2 =
   .modal   = false
 };
 
+// My experiments revealed that the higher the element .maxval is the higher the volume of the audio 
+// that is produced by the speaker of the M5Atom Echo.
+// 10_000 dec = 0x2710
+uint8_t maxval_idx = 5;
+#define MAXVAL_MINIMUM  0
+#define MAXVAL_DEFAULT  5
+#define MAXVAL_MAXIMUM 10 // Which will result in 10 * 1000 = 10_000 (see function setVolume)
+
 // Define the morse code, dot-dash sequences for 
 // the characters that are in the text string to send in morse code
 // Example: in the array {1,2}, the 1 represents a dot, the 2 a dash.
