@@ -168,7 +168,7 @@ handle_rx(): received nr of bytes: 6
 handle_rx(): rcvd correct destination address: 0x55
 handle_rx(): RXpacketNr: 14401
 handle_rx(): type of command: CMD_VOLUME_CHG
-set_volume(): volume (0-10) maximum reached. Reset to minimum: 0
+set_volume(): volume (0-10) maximum reached. Reset to minimum: 0  <<<=== With 0 no audio will be produced. This is a "sound OFF" state.
 
 poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
 handle_rx(): received nr of bytes: 6
@@ -201,7 +201,7 @@ handle_rx(): received nr of bytes: 6
 handle_rx(): rcvd correct destination address: 0x55
 handle_rx(): RXpacketNr: 14404
 handle_rx(): type of command: CMD_VOLUME_CHG
-set_volume(): volume (0-10) increased to: 1
+set_volume(): volume (0-10) increased to: 1   <<<=== with this value sound is audible from the speaker of the M5Atom Echo but weak (and that's the intention of this volume control!)
 
 poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
 handle_rx(): received nr of bytes: 6
