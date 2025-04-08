@@ -376,7 +376,7 @@ to receive text for morse code
 and to receive speed change commands
 from a M5Stack Cardputer device.
 
-setup(): morse default speed index = 4
+setup(): morse default speed index = 4 equals to: 17 words per minute
 Values for dly1, dly3 and dly7:
 dly1: 60, dly3: 180, dly7: 420 mSeconds
 
@@ -384,10 +384,11 @@ setup(): Board type: M5Atom Echo
 setup(): I2C Pins set successfull.
 setting I2C buffersize to 42 successfull.
 setup(): Successfully connected onto I2C bus nr: 0.
-E (4102) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
+E (4113) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
+set_volume(): volume (0-10) increased to: 5
 
 loop(): entering the while loop...
-loop(): ESP.getFreeHeap = 302580
+loop(): ESP.getFreeHeap = 302240
 
 ```
 
