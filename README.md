@@ -22,17 +22,17 @@ This will continue during one minute.
 
 VERSIONS:
 
-There are two version of this software.
+There are two version of this software: Version_1 and Version_2. Both versions consist of:
 ```
   a) an Arduino (C++) sketch for the master device (in my case the M5Cardputer);
   b) an Arduino (C++) sketch for the slave device (in my case the M5Echo).
 
 ```
-In the ```src``` folder are two subfolders: "master", containing the software to be flashed to the master device,
-"slave", containing the software to be flashed to the slave device.
+In each of the folders ```src\version_1``` and ```src\version_2``` are two subfolders: "master", containing the software to be flashed to the master device, "slave", containing the software to be flashed to the slave device.
 
 Hardware used:
 
+In version_1:
 ```
   1) M5Stack M5Cardputer;
   2) M5Stack M5Echo;
@@ -40,11 +40,23 @@ Hardware used:
   4) at least one grove wire to connect port A of the M5Cardputer with Port A of the M5Echo.
 ```
 
+In version_2:
+As in version_1 and:
+```
+  5) a M5Stack M5Dualbutton unit.
+
 I2C Communication:
 
 In this moment the I2C communication is one-way: from the I2C master to the I2C slave, Using the hexadecimal address 0x55
 towards the slave device. (And inherent to the I2C protocol the I2C module (Wire.h / Wire.cpp), the slave will send ACK
 impulses back to the master).
+
+In version 2, the M5Dualbutton unit is also, via the grove Hub connected to port A of the M5Cardputer.
+This implies that Port A is used for two different tasks: 
+```
+   a) I2C communication with the M5Atom Echo;
+   b) reading of button status of the M5Dualbutton unit;
+```
 
 In the initial version there were three types of messages. 
 To make it more simple: 
@@ -54,6 +66,9 @@ now there is only defined one type of message. The message can contain commands 
 - CMD_MORSE_GO
 - CMD_MORSE_END
 - CMD_VOLUME_CHG
+
+In Version_2 the M5Dualbutton, RED button is used to inititate a command CMD_MORSE_GO. The BLUE button is used to initiate a 
+command CMD_MORSE_END.
 
 The only messages that contain data are:
 - the CMD_SPEED_CHG  (morse speed change message, that contains an index value to a speeds array as data);
@@ -143,8 +158,8 @@ If you change this flag into "true", during runtime there will be printed more i
 
 THE MASTER DEVICE
 
-After a reset ("Btn Rst" on the back of the M5Cardputer device, the device will show in the display
-the text
+Version_1: 
+After a reset ("Btn Rst" on the back of the M5Cardputer device), the text below will be displayed:
 
 ```
  "Input:
@@ -160,6 +175,8 @@ will interprete and handle the command given. If it is a command for the M5Echo 
 send a command type of message, containing the command you entered, to the M5Echo. My experience is that this goes
 very rapid. On the oscillograms one can see that an I2C command type of message only contains 6 bytes.
 Sending this command message packet takes only 13 x 50 = 650 microseconds! (see the oscillograms).
+
+In version_2 first will be shown a list of available commands. After a delay of 5 seconds, the text of Version_1 (above) will be shown.
 
 After a reset the following text will be shown on the Serial Monitor output of the M5Cardputer:
 
@@ -401,6 +418,9 @@ the M5Echo kept looping a software reset. "Panic...". In the crash message I saw
 "Arduino > Tools > Flash Mode". I saw that this option was default set for "QIO 80MHz". I changed this option to "DIO 80MHz".
 After I flashed the sketch again to the M5Echo, the sketch ran flawlessly.
 
+Note also that for the M5Atom Echo to executed the flashed sketch without error, in the Arduino v2.3.5, BOARDS MANAGER, one needs to 
+install M5STACK v2.1.4 (and not v3.x.x because that will result in runtime errors).
+
 DESCRIPTION DEFAULT MORSE SPEED TEST ("paris ")
 
 During one minute the word "paris " repeatedly will be send in morse code.
@@ -443,6 +463,9 @@ Links to product pages of the hardware used:
 - M5Stack M5Echo (seller in Portugal) [info](https://mauser.pt/catalog/product_info.php?products_id=096-8697);
 - M5Stack Grove hub [info](https://shop.m5stack.com/products/mini-hub-module)
 
+For Version_2:
+- M5Stack mini dualbutton unit [info](https://shop.m5stack.com/products/mini-dual-button-unit)
+
 Links to product accessories of the hardwar used:
 - Seeed studio Grove I2C Hub [info](https://www.seeedstudio.com/Grove-I2C-Hub.html);
 - Seeed studio Grove Universal 4 Pin Buckled 20cm cable (5 Pcs Pack)
@@ -464,7 +487,7 @@ from which are derived the values of other global variables (see the explanation
 Update 2025-04-08:
 
 The volume control for the M5Atom Echo is completely changed. The function setVolume in the AtomEchoSPKR driver that I created long before this project,
-did not work. Yesterday, during some experiments, I discovered that changing the value of the item ".maxval" of the four structures: tone_dat, tone_dash, btn_tone1 and btn_tone2,
+did not work. During some experiments, I discovered that changing the value of the item ".maxval" of the four structures: tone_dat, tone_dash, btn_tone1 and btn_tone2,
 has the effect of volume control. The sketches are now changed in such a way that if the user of the master device presses "<ctrl>" followed by "v", the master device will send
 a CMD_VOLUME_CHG message to the slave device, which in turn, on receiving this message sets a flag which will be checked in loop(). When the flag "cmd_volume_echo_flag" is set,
 the function "set_volume()" will be called and the value of the volume index will be increased by 1. When the volume index has reached beyond 10, the value will be reset to 0.
@@ -472,6 +495,34 @@ When the volume index is zero there is no sound ouput from the M5Atom Echo speak
 the speaker, be it very weak. That was exact my intention because there can be situations that one cannot make loud noises. With this update I also uploaded a new Monitor_output.txt 
 file that shows the new remote volume control functionality.
 
+Update 2025-11-16:
 
+Created Version_2. 
+Functionalities added in the master device:
+```
+  - to use GROVE PORT-A of the M5Cardputer for both I2C communication as to read status of the buttons of a Dualbutton unit;
+  - to blink the build-in RGB LED of the StampS3 microcontroller inserted in the M5Cardputer.;
+  - text feedback on the bottom text line of the display of the M5Cardputer, for example: "MORSE GO" and "MORSE END";
+  - to put to sleep and to awake the display of the M5Cardputer.
+
+master device new functions:
+```
+  setPins(), 
+  disp_feedback()
+  blinkFeedback()
+  processCommand()
+  ck_dualbutton()
+  set_led()
+```
+
+master device modified functions:
+```
+  disp_commands()
+  handle_kbd_input()
+  send_cmd()
+  send_speed_chg()
+  setup()
+  loop()
+```
 
 
