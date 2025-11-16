@@ -43,7 +43,7 @@ In version_1:
 In version_2:
 As in version_1 and:
 ```
-  5) a M5Stack M5Dualbutton unit.
+  5) a M5Stack mini dualbutton unit.
 
 I2C Communication:
 
