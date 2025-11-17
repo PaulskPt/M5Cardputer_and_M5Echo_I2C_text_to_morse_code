@@ -22,7 +22,7 @@ This will continue during one minute.
 
 # VERSIONS
 
-There are two version of this software: Version_1 and Version_2. Both versions consist of:
+There are two version of this software: Version_1 and Version_2. Each version consists of:
 
 ```
   a) an Arduino (C++) sketch for the master device (in my case the M5Cardputer);
