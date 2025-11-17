@@ -530,4 +530,10 @@ Created version_2.
   loop()
 ```
 
+### MS Copilot analysis and system diagram description
+[text]()
+
+### MS Copilot system diagram
+[image](https://github.com/PaulskPt/M5Cardputer_and_M5Echo_I2C_text_to_morse_code/blob/main/images/2025-11-16_20h14_System_Diagram.png)
+
 
