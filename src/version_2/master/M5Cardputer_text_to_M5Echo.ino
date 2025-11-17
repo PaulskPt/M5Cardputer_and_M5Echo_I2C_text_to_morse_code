@@ -32,7 +32,10 @@
 * M5Stack dualbutton unit example: https://github.com/m5stack/M5Stack/tree/master/examples/Unit/DUAL_BUTTON
 *
 * Update: 2025-11-16: added functionality to use GROVE PORT-A of the M5Cardputer for both I2C communication
-          as to read status of the buttons of a M5Stack Dualbutton unit. For this the function setPins() was created.
+*          as to read status of the buttons of a M5Stack Dualbutton unit. For this the function setPins() was created.
+*  Update: 2025-11-17: in handle_kbd_input(): 
+*                      a) if display is sleeping, wake it up on keypress, do not process the key further;
+*                      b) added debounce filtering.
 */
 
 /**
@@ -226,38 +229,6 @@ void beep() {
     delay(100);
   }
 }
-
-/*
-bool setPins(bool for_i2c = true) {
-  bool result = false;
-  if (for_i2c) {
-    if (pinsSetForI2C) {
-      return true;  // No need to set again
-    }
-    result = Wire.setPins(GROVE_SDA, GROVE_SCL);
-    delay(1000); // Delay for 1000 milliseconds
-    pinsSetForI2C = true;
-  } else {
-#ifdef USE_DUALBUTTON
-    // set back to default pins
-    if (!pinsSetForI2C) {
-      return true; // No need to set again
-    }
-    pinMode(RED_BTN, INPUT);
-    pinMode(BLUE_BTN, INPUT);
-    pinsSetForI2C = false;
-    result = true;
-#else
-   Wire.setPins(GROVE_SDA, GROVE_SCL);
-#endif
-  }
-#ifdef MY_DEBUG
-  Serial.print(F("setPins(): result = "));
-  Serial.printf("%s\n", (result == true) ? "true" : "false");
-#endif
-  return result;
-}
-*/
 
 bool setPins(bool for_i2c = true) {
   bool result = false;
@@ -537,13 +508,18 @@ void send_text_msg() {
   Serial.print(txt0);
   Serial.print(F("New TXpacketNr = "));
   Serial.println(TXpacketNr);
+#ifndef MY_DEBUG
+  Serial.print(txt0);
+  Serial.print(F("String data  = \""));
+  Serial.print(data);
+  Serial.println(F("\""));
+#endif
   uint8_t le_data = data.length();
   uint8_t le_message;
   uint8_t le_packet;
   uint8_t i;
   uint8_t j;
   uint8_t *message;
-
   le_packet = 0;
 
   message = (uint8_t *)malloc( 4 + le_data + 1);
@@ -557,9 +533,20 @@ void send_text_msg() {
     message[4 + j] = data[j];
     le_packet++;
   }
-  message[4 + le_data +1] = '\0'; // end of string marker
-  le_packet++;
+  //message[4 + le_data + 1] = '\0'; // end of string marker
+  message[le_packet] = '\0'; // end of string marker
+  le_packet++; // include the '\0' byte
 
+#ifdef MY_DEBUG
+  //Serial.printf("le_data = %d\n", le_data);
+  //Serial.print(txt0);
+  //Serial.printf("le_packet = %d\n", le_packet); // this le_packet, in this moment, excludes the '\0' byte
+  for (j = 0; j < le_packet; j++) {
+    Serial.print(txt0);
+    Serial.printf("message[%d] = '0x%02x' ('%c')\n", j, message[j], message[j]);
+  }
+#endif
+  
   le_message=sizeof(message)/sizeof(message[0]);
   
   String s;
@@ -591,7 +578,7 @@ void send_text_msg() {
   Serial.print(txt0);
   Serial.println(F("message in bytes: "));
   //uint8_t le3 = sizeof(message);
-  for (i = 0; i < le_packet; i++) {
+  for (i = 0; i < le_packet; i++) {  // 0..8
     Serial.printf("0x%02x ", message[i]);
   }
   Serial.println();
@@ -953,8 +940,12 @@ void pr_fillin(char ltr_fillin) {
   // Serial.printf("%s%s + \'%c\' %s\n", txts[0], txts[2], ltr_fillin, txts[1]);
 }
 
+
 void handle_kbd_input() {
   static constexpr const char txt0[] PROGMEM = "handle_kbd_input(): ";
+  static char lastKey = '\0';
+  static unsigned long lastKeyTime = 0;
+  const unsigned long debounceDelay = 50; // ms
 
   M5Cardputer.update();
   if (M5Cardputer.Keyboard.isChange()) {
@@ -962,10 +953,32 @@ void handle_kbd_input() {
     if (M5Cardputer.Keyboard.isPressed()) {
       beep();
       Keyboard_Class::KeysState status = M5Cardputer.Keyboard.keysState();
-
-      for (auto i : status.word) {
-        data += i;
+      if (displaySleeping) {
+        M5Cardputer.Display.wakeup();
+        displaySleeping = false;
+        Serial.println("Display woke up on keypress.");
+        return; // consume this keypress
       }
+#ifndef MY_DEBUG
+      std::string wordStr(status.word.begin(), status.word.end());
+      Serial.printf("%sstatus.word = \"%s\"\n", txt0, wordStr.c_str());
+#endif
+      // --- Auto-debounce layer ---
+      for (auto i : status.word) {
+        unsigned long now = millis();
+
+        // Auto-debounce: ignore if same key pressed too quickly OR same as last buffer char
+        if ((i == lastKey && (now - lastKeyTime) < debounceDelay) ||
+            (data.length() > 2 && i == data[data.length() - 1])) {
+          Serial.printf("%sBounce ignored: '%c'\n", txt0, i);
+          continue;
+        }
+
+        data += i; // accept key
+        lastKey = i;
+        lastKeyTime = now;
+      }
+
 
       if (data != "> ") {
         if (data.length() >= 2) {
@@ -989,42 +1002,33 @@ void handle_kbd_input() {
         Serial.print(txt0);
         Serial.println(F("<ctrl> pressed"));
         if (data.length() > 2)
-          // wipe out what has been typed before, 
-          // because user hit the <ctrl> button!
-          data = "> ";  
+          data = "> ";  // wipe out what has been typed before
       } else {
-       
         if (status.del) {
           data.remove(data.length() - 1);
         }
 
         if (status.enter) {
           data.remove(0, 2);
-          // check if data does contain only spaces
-          // If so, do not send.
           if (isDataOnlySpaces() == false) { 
             if (data.length() > 0) {
               canvas.println(data);
               canvas.pushSprite(4, 4);
               send_text_msg();  // send the text to the M5Echo
-              //send(data);
             }
           }
           data = "> ";
         }
 
         M5Cardputer.Display.fillRect(0, M5Cardputer.Display.height() - 28,
-                                      M5Cardputer.Display.width(), 25,
-                                      BLACK);
+                                     M5Cardputer.Display.width(), 25,
+                                     BLACK);
 
         M5Cardputer.Display.drawString(data, 4,
-                                        M5Cardputer.Display.height() - 24);
+                                       M5Cardputer.Display.height() - 24);
       }
 
-      // brk2 is needed to break out of the for..loop
-      // because we have also "break" inside the switch block
       bool brk2 = false; 
-
       for (auto i : status.word) {
         if (ctrl_pressed) {
           switch (i) {
@@ -1034,130 +1038,70 @@ void handle_kbd_input() {
               disp_main_screen();
               brk2 = true;
               break;
-            
             case SPEAKER_ON_OFF:
-              use_speaker = !use_speaker; // flip the flag
+              use_speaker = !use_speaker;
               data = "> ";
               ctrl_pressed = false;
               brk2 = true;
               break;
-            
             case MORSE_GO:
               morse_go_flag = true;
-              blinkFeedback(CMD_MORSE_GO);   // <-- blink LED immediately
+              blinkFeedback(CMD_MORSE_GO);
               break;
-        
             case MORSE_END:
               morse_end_flag = true;
-              blinkFeedback(CMD_MORSE_END);   // <-- blink LED immediately
+              blinkFeedback(CMD_MORSE_END);
               break;
-        
             case KEY_RESET:
               key_reset_flag = true;
-              blinkFeedback(CMD_RESET);   // <-- blink LED immediately
+              blinkFeedback(CMD_RESET);
               break;
-
             case VOLUME_CHG:
               volume_echo_flag = true;
               blinkFeedback(CMD_VOLUME_CHG);
               break;
-        
             case KEY_SPEED_DECR:
               decrease_pressed = true;
               speed_idx -= 1;
               blinkFeedback(CMD_SPEED_CHG);
               if (my_debug) {
-                  Serial.print(txt0);
-                  Serial.print(F("speed_idx < SPEED_IDX_MINIMUM ? "));
-                  Serial.printf("%s\n", (speed_idx < SPEED_IDX_MINIMUM) ? "true" : "false");
+                Serial.print(txt0);
+                Serial.print(F("speed_idx < SPEED_IDX_MINIMUM ? "));
+                Serial.printf("%s\n", (speed_idx < SPEED_IDX_MINIMUM) ? "true" : "false");
               }
               if (speed_idx < SPEED_IDX_MINIMUM)
-                  speed_idx = SPEED_IDX_MINIMUM;
+                speed_idx = SPEED_IDX_MINIMUM;
               brk2 = true;
               break;
-        
             case KEY_SPEED_INCR:
               increase_pressed = true;
               speed_idx += 1;
               blinkFeedback(CMD_SPEED_CHG);
               if (my_debug) {
-                  Serial.print(txt0);
-                  Serial.print(F("speed_idx >= SPEED_IDX_MAXIMUM ? "));
-                  Serial.printf("%s\n", (speed_idx >= SPEED_IDX_MAXIMUM) ? "true" : "false");
+                Serial.print(txt0);
+                Serial.print(F("speed_idx >= SPEED_IDX_MAXIMUM ? "));
+                Serial.printf("%s\n", (speed_idx >= SPEED_IDX_MAXIMUM) ? "true" : "false");
               }
               if (speed_idx >= SPEED_IDX_MAXIMUM)
-                  speed_idx = SPEED_IDX_MAXIMUM;
+                speed_idx = SPEED_IDX_MAXIMUM;
               brk2 = true;
               break;
           }
         }
-        if (brk2)
-          break;
-      }  // end-of-for loop
-      if (show_commands_flag || key_reset_flag || morse_go_flag || \
+        if (brk2) break;
+      }
+
+      if (show_commands_flag || key_reset_flag || morse_go_flag ||
           morse_end_flag || decrease_pressed || increase_pressed || volume_echo_flag) {
         data = "> ";
-        ctrl_pressed = false; // reset flag
-        if (show_commands_flag)
-          show_commands_flag = false;
-        delay(500); // debounce delay
+        ctrl_pressed = false;
+        if (show_commands_flag) show_commands_flag = false;
+        delay(500); // debounce delay for control keys
       }
     }
   }
 }
 
-// For a very util source for the Cardputer see:
-// https://cardputer.free.nf/class_keyboard___class.html
-/*
-void loop() {
-  cleanup(); // reset all global flags and settings
-  while (true) {
-
-    handle_kbd_input();
-
-#ifdef USE_DUALBUTTON
-    setPins(false); // set back to default pins for dual button
-    ck_dualbutton();
-    if (dualbtn_red_pressed) {
-      morse_go_flag = true;
-      dualbtn_red_pressed = false; // reset
-    }
-    if (dualbtn_blue_pressed) {
-      morse_end_flag = true;
-      dualbtn_blue_pressed = false; // reset
-    }
-#endif
-
-    if (key_reset_flag) {
-      send_cmd(CMD_RESET);
-      key_reset_flag = false;
-    }
-
-    if (morse_go_flag) {
-      send_cmd(CMD_MORSE_GO);
-      morse_go_flag = false;
-    }
-
-    if (morse_end_flag) {
-      send_cmd(CMD_MORSE_END);
-      morse_end_flag = false;
-    }
-
-    if (decrease_pressed || increase_pressed) {
-      send_speed_chg(speed_idx);
-      if (decrease_pressed)
-        decrease_pressed = false; // reset
-      if (increase_pressed)
-        increase_pressed = false; // reset
-    }
-
-    if (volume_echo_flag) {
-      send_cmd(CMD_VOLUME_CHG);
-      volume_echo_flag = false;
-    }
-  }
-}
-*/
 
 void set_led() {
   switch (led_status) {
@@ -1308,6 +1252,9 @@ void setup() {
   disp_commands(true);
   disp_main_screen();
 }
+
+// For a very util source for the Cardputer see:
+// https://cardputer.free.nf/class_keyboard___class.html
 
 void loop() {
   bool dualbtn_pressed = false;
