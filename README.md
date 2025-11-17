@@ -425,7 +425,7 @@ the M5Echo kept looping a software reset. "Panic...". In the crash message I saw
 "Arduino > Tools > Flash Mode". I saw that this option was default set for "QIO 80MHz". I changed this option to "DIO 80MHz".
 After I flashed the sketch again to the M5Echo, the sketch ran flawlessly.
 
-Note also that for the M5Atom Echo to executed the flashed sketch without error, in the Arduino v2.3.5, BOARDS MANAGER, one needs to 
+Note also that for the M5Atom Echo, to execute the flashed sketch without error, in the Arduino v2.3.5, BOARDS MANAGER, one needs to 
 install M5STACK v2.1.4 (and not v3.x.x because that will result in runtime errors).
 
 ## DESCRIPTION DEFAULT MORSE SPEED TEST ("paris ")
