@@ -22,7 +22,7 @@ This will continue during one minute.
 
 # VERSIONS
 
-There are two version of this software: Version_1 and Version_2. Each version consists of:
+There are two version of this software: version_1 and version_2. Each version consists of:
 
 ```
   a) an Arduino (C++) sketch for the master device (in my case the M5Cardputer);
@@ -72,7 +72,7 @@ now there is only defined one type of message. The message can contain commands 
 - CMD_MORSE_END
 - CMD_VOLUME_CHG
 
-In Version_2 the mini dualbutton, RED button is used to inititate a command CMD_MORSE_GO. The BLUE button is used to initiate a 
+In version_2 the mini dualbutton, RED button is used to inititate a command CMD_MORSE_GO. The BLUE button is used to initiate a 
 command CMD_MORSE_END.
 
 The only messages that contain data are:
@@ -163,7 +163,7 @@ If you change this flag into "true", during runtime there will be printed more i
 
 ## THE MASTER DEVICE
 
-Version_1: 
+version_1: 
 After a reset ("Btn Rst" on the back of the M5Cardputer device), the text below will be displayed:
 
 ```
@@ -181,7 +181,7 @@ send a command type of message, containing the command you entered, to the M5Ech
 very rapid. On the oscillograms one can see that an I2C command type of message only contains 6 bytes.
 Sending this command message packet takes only 13 x 50 = 650 microseconds! (see the oscillograms).
 
-In Version_2 first will be shown a list of available commands. After a delay of 5 seconds, the text of Version_1 (above) will be shown.
+In version_2 first will be shown a list of available commands. After a delay of 5 seconds, the text of version_1 (above) will be shown.
 
 After a reset the following text will be shown on the Serial Monitor output of the M5Cardputer:
 
@@ -467,7 +467,7 @@ I added comments/explanation to some of the oscillograms.
 - M5Stack M5Echo (seller in Portugal) [info](https://mauser.pt/catalog/product_info.php?products_id=096-8697);
 - M5Stack Grove hub [info](https://shop.m5stack.com/products/mini-hub-module)
 
-## For Version_2
+## For version_2
 - M5Stack mini dualbutton unit [info](https://shop.m5stack.com/products/mini-dual-button-unit)
 
 Links to product accessories of the hardware used:
@@ -500,7 +500,7 @@ file that shows the new remote volume control functionality.
 
 ## Update 2025-11-16
 
-Created Version_2.
+Created version_2.
 
 ### Functionalities added in the master device
 ```
