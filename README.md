@@ -470,7 +470,7 @@ I added comments/explanation to some of the oscillograms.
 ## For Version_2
 - M5Stack mini dualbutton unit [info](https://shop.m5stack.com/products/mini-dual-button-unit)
 
-Links to product accessories of the hardwar used:
+Links to product accessories of the hardware used:
 - Seeed studio Grove I2C Hub [info](https://www.seeedstudio.com/Grove-I2C-Hub.html);
 - Seeed studio Grove Universal 4 Pin Buckled 20cm cable (5 Pcs Pack)
   [info](https://www.seeedstudio.com/Grove-Universal-4-Pin-Buckled-20cm-Cable-5-PCs-pack.html);
