@@ -498,7 +498,7 @@ When the volume index is zero there is no sound ouput from the M5Atom Echo speak
 the speaker, be it very weak. That was exact my intention because there can be situations that one cannot make loud noises. With this update I also uploaded a new Monitor_output.txt 
 file that shows the new remote volume control functionality.
 
-## Update 2025-11-16
+## Updates 2025-11-16 - 2025-11-17
 
 Created version_2.
 
@@ -507,7 +507,8 @@ Created version_2.
   - to use GROVE PORT-A of the M5Cardputer for both I2C communication as to read status of the buttons of a mini dualbutton unit;
   - to blink the built-in RGB LED of the StampS3 microcontroller inserted in the M5Cardputer;
   - text feedback on the bottom text line of the display of the M5Cardputer, for example: "MORSE GO" and "MORSE END";
-  - to put to sleep and to awake the display of the M5Cardputer.
+  - to put to sleep and to awake the display of the M5Cardputer;
+  - in hanndle_kbd_input() added: a) display wakeup functionality; b) added key bounce filter.
 ```
 
 ### master device new functions
