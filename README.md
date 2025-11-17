@@ -1,6 +1,6 @@
 M5Cardputer_and_M5Echo_I2C_text_to_morse_code
 
-INTRO - A BIT OF HISTORY:
+# INTRO - A BIT OF HISTORY
 
 In 1962 I was teached the morse code at the signals school of the Royal Dutch Navy in Amsterdam, The Netherlands. During nine months I learned to send and to receive (and decode in my head) morse code and type the received text on a typewriter ("in the blind", that is: not looking on your hands while typing). Sending the morse code using a heavy duty copper "straight key" was done by the so-called "count method" (in Dutch: "tel methode"). The teacher had a wooden stick in one of his hands. He hit the stick on a wooden block mounted on the table in front of him, in the rythm that we, students "sang" the counting.
 And we, the student wireless radio operators, in English also known as "sparks" (named after one of the first type of wireless radio transmitter [wiki](https://en.wikipedia.org/wiki/Spark-gap_transmitter)), had to speak loudly the counting of the 
@@ -13,26 +13,28 @@ Now, 63 years later, the profession of wireless operator doesn't exist anymore. 
 the sparks disappeared from the military navy ships as well as from the merchant navy ships. However, morse code is still in use by radio-hobbyists, known as: "hamradio operators". I am one of them. For more info see: [morse code](https://en.wikipedia.org/wiki/Morse_code).
 Since a decade I also experiment with microcontrollers. Recently, I came to the idea to create a small project in which a microcontroller generates morse code. 
 
-PURPOSE:
+# PURPOSE
 
 Use an M5Stack M5Cardputer to create and send I2C messages (packets) to an M5Stack M5Echo.
 The M5Echo after interprating the received message, in the case of reception of a text message,
 will translate the received text into morse code and make the code audible through the builtin loudspeaker.
 This will continue during one minute.
 
-VERSIONS:
+# VERSIONS
 
 There are two version of this software: Version_1 and Version_2. Both versions consist of:
+
 ```
   a) an Arduino (C++) sketch for the master device (in my case the M5Cardputer);
   b) an Arduino (C++) sketch for the slave device (in my case the M5Echo).
 
 ```
+
 In each of the folders ```src\version_1``` and ```src\version_2``` are two subfolders: "master", containing the software to be flashed to the master device, "slave", containing the software to be flashed to the slave device.
 
-Hardware used:
+# Hardware used
 
-In version_1:
+## In version_1
 ```
   1) M5Stack M5Cardputer;
   2) M5Stack M5Echo;
@@ -40,10 +42,12 @@ In version_1:
   4) at least one grove wire to connect port A of the M5Cardputer with Port A of the M5Echo.
 ```
 
-In version_2:
+## In version_2
 As in version_1 and:
+
 ```
   5) a M5Stack mini dualbutton unit.
+```
 
 I2C Communication:
 
@@ -51,11 +55,12 @@ In this moment the I2C communication is one-way: from the I2C master to the I2C 
 towards the slave device. (And inherent to the I2C protocol the I2C module (Wire.h / Wire.cpp), the slave will send ACK
 impulses back to the master).
 
-In version 2, the M5Dualbutton unit is also, via the grove Hub connected to port A of the M5Cardputer.
-This implies that Port A is used for two different tasks: 
+In version 2, the mini dualbutton unit is also, via the grove Hub connected to port A of the M5Cardputer.
+This implies that Port A is used for two different tasks:
+
 ```
-   a) I2C communication with the M5Atom Echo;
-   b) reading of button status of the M5Dualbutton unit;
+  a) I2C communication with the M5Atom Echo;
+  b) reading of button status of the mini dualbutton unit;
 ```
 
 In the initial version there were three types of messages. 
@@ -67,7 +72,7 @@ now there is only defined one type of message. The message can contain commands 
 - CMD_MORSE_END
 - CMD_VOLUME_CHG
 
-In Version_2 the M5Dualbutton, RED button is used to inititate a command CMD_MORSE_GO. The BLUE button is used to initiate a 
+In Version_2 the mini dualbutton, RED button is used to inititate a command CMD_MORSE_GO. The BLUE button is used to initiate a 
 command CMD_MORSE_END.
 
 The only messages that contain data are:
@@ -88,7 +93,7 @@ morse code audio through its loudspeaker. In this moment there are the following
   -  TEXT_MESSAGE, a message containing text (to be translated into morse code).
 
 
-OTHER COMMANDS:
+### OTHER COMMANDS
 
   Beside the messages containing commands for the slave device,
   
@@ -118,13 +123,13 @@ OTHER COMMANDS:
   +---+-------------------+
 
 ```
-DEFINITIONS:
+### DEFINITIONS
   
 Upon start (or reset) the Arduino sketch running on either the master or the slave device
 will load certain definitions from the #include file: "puter_echo.h" which is present in the 
 subfolers "master" and "slave".
 
-MESSAGE CONSTRUCTION : 
+### MESSAGE CONSTRUCTION
 
 In the case of a text message:
 
@@ -149,14 +154,14 @@ In the case of a command message:
 
 ```
 
-SETTINGS:
+### SETTINGS
 
 In the file "puter_echo.h", at the top there is a setting for the boolean flag "my_debug". It is set to "false".
 If you change this flag into "true", during runtime there will be printed more information to the Serial Monitor output.
 
 
 
-THE MASTER DEVICE
+## THE MASTER DEVICE
 
 Version_1: 
 After a reset ("Btn Rst" on the back of the M5Cardputer device), the text below will be displayed:
@@ -193,17 +198,17 @@ setup(): Successfully connected onto I2C bus nr: 0.
 
 ```
 
-THE SLAVE DEVICE
+## THE SLAVE DEVICE
 
-MORSE SEND FUNCTION
+### MORSE SEND FUNCTION
 
-```
    The unit of morse code speed is the number of times
    the word "paris" is sent in morse code per minute.
    A speed of morse code of 16 words per minute is equal to
    sending the word "paris" 16 times per minute.
 
    Morse code counting:
+```
    +-----------------+--------+
    | what:           | units: |
    +-----------------+--------+
@@ -217,7 +222,7 @@ MORSE SEND FUNCTION
    +-----------------+--------+
    | word space      |    7   |
    +---------------.-+--------+
-
+```
          The length of the word "paris" in morse code units (see table above) is: 
          0             1               2               3               4             5
          1 2 345 6 789 0 1 234 5 6 789 012 3 4 567 8 9 012 2 4 5 678 9 0 1 2 3 4567890 
@@ -243,26 +248,26 @@ ended). When othere types of messages are received they will be ignored in that 
 sending of the morse code will continue, using the contents of the cw_buffer (because the rx_buffer meanwhile
 has been filled with data from a new message).
 
-The include file "puter_echo.h" for the slave device contains a table for the conversion from ASCII to code to send morse dots and dashes.
+The include file "puter_echo.h" for the slave device contains a table for the conversion
+from ASCII to code to send morse dots and dashes.
 
 ```
-std::unordered_map<char, std::vector<int>> morse_txt_dict = {
-  //                     decimal:
-  {'\"', {1,2,1,1,2,1}}, // 34 <">
-  {',', {2,2,1,1,2,2}},  // 44
-  {'.', {1,2,1,2,1,2}},  // 46
-  {'/', {2,1,1,2,1}},    // 47
-  {'0', {2,2,2,2,2}},    // 48       = 30 HEX
-  {'1', {1,2,2,2,2}},    // 49
-  {'2', {1,1,2,2,2}},    // 50
-  [...]
-  {'v', {1,1,1,2}},      // 118
-  {'w', {1,2,2}},        // 119
-  {'x', {2,1,1,2}},      // 120
-  {'y', {2,1,2,2}},      // 121
-  {'z', {2,2,1,1}},      // 122
-};
-
+  std::unordered_map<char, std::vector<int>> morse_txt_dict = {
+    //                     decimal:
+    {'\"', {1,2,1,1,2,1}}, // 34 <">
+    {',', {2,2,1,1,2,2}},  // 44
+    {'.', {1,2,1,2,1,2}},  // 46
+    {'/', {2,1,1,2,1}},    // 47
+    {'0', {2,2,2,2,2}},    // 48       = 30 HEX
+    {'1', {1,2,2,2,2}},    // 49
+    {'2', {1,1,2,2,2}},    // 50
+    [...]
+    {'v', {1,1,1,2}},      // 118
+    {'w', {1,2,2}},        // 119
+    {'x', {2,1,1,2}},      // 120
+    {'y', {2,1,2,2}},      // 121
+    {'z', {2,2,1,1}},      // 122
+  };
 ```
 
 In this table the array after each character value, for exaple in:
@@ -276,28 +281,28 @@ Here an example of Serial Monitor output when the default text "paris " is being
 to the speaker of the M5Echo:
 
 ```
-handle_rx(): RXpacketNr: 14387
-handle_rx(): type of message: CMD_MESSAGE
-handle_rx(): type of command: CMD_MORSE_GO ('paris')
-send_morse(): Starting...
-tone dot (and dash) frequency = 1200 Hz
-tone_dot.modal  = true
-tone_dash.modal = true
-dot_dash_time(): tone_dot.time_ms  set to: 100 mSeconds
-                 tone_dash.time_ms set to: 300 mSeconds
-send_morse(): going to send 'paris ', length = 6
-send_morse(): contents cw_buffer = "paris "
-Values for dly1, dly3 and dly7:
-dly1: 50, dly3: 150, dly7: 350 mSeconds
- 1) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
-
- 2) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
-
- 3) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
-
- 4) .|1|---|1|---|1|.| 3 |
-send_morse(): Button was pressed. Exiting function.
-loop(): Button was pressed
+  handle_rx(): RXpacketNr: 14387
+  handle_rx(): type of message: CMD_MESSAGE
+  handle_rx(): type of command: CMD_MORSE_GO ('paris')
+  send_morse(): Starting...
+  tone dot (and dash) frequency = 1200 Hz
+  tone_dot.modal  = true
+  tone_dash.modal = true
+  dot_dash_time(): tone_dot.time_ms  set to: 100 mSeconds
+                   tone_dash.time_ms set to: 300 mSeconds
+  send_morse(): going to send 'paris ', length = 6
+  send_morse(): contents cw_buffer = "paris "
+  Values for dly1, dly3 and dly7:
+  dly1: 50, dly3: 150, dly7: 350 mSeconds
+   1) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+  
+   2) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+  
+   3) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
+  
+   4) .|1|---|1|---|1|.| 3 |
+  send_morse(): Button was pressed. Exiting function.
+  loop(): Button was pressed
 
 ```
 Note that in the lines 1)...3) the decimal "." point represents a morse code "dot".
@@ -320,6 +325,8 @@ send_morse(): going to send 'paris ', length = 6
 send_morse(): contents cw_buffer = "paris "
 Values for dly1, dly3 and dly7:
 dly1: 50, dly3: 150, dly7: 350 mSeconds
+```
+```
  1) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
 
  2) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
@@ -327,6 +334,8 @@ dly1: 50, dly3: 150, dly7: 350 mSeconds
  3) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |.|1|.|1|.|  7  |
 
  4) .|1|---|1|---|1|.| 3 |.|1|---| 3 |.|1|---|1|.| 3 |.|1|.| 3 |
+```
+```
 poll_I2C(): Nr of bytes available in msg via Wire (I2C) 6
 handle_rx(): received nr of bytes: 6
 handle_rx(): rcvd correct destination address: 0x55
@@ -345,32 +354,30 @@ See function "handle_rx()".
 The table below show the arbitrary measured speeds.
 
 ```
- +-----------+-------+-----------+-------------+
- | set new_  | var-  |  milli-   | morse speed |
- | speed_idx | iable |  sonds    | (wpm)       |
- +-----------+-------+-----------+-------------+
- |     0     | dly1  |   100     |    10       |
- +-----------+-------+-----------+-------------+
- |     1     | dly1  |    90     |    12       |
- +-----------+-------+-----------+-------------+
- |     2     | dly1  |    80     |    13       |
- +-----------+-------+-----------+-------------+
- |     3     | dly1  |    70     |    15       |
- +-----------+-------+-----------+-------------+
- |     4     | dly1  |    60     |    17       |  <<== default
- +-----------+-------+-----------+-------------+
- |     5     | dly1  |    50     |    18       |
- +-----------+-------+-----------+-------------+
- |     6     | dly1  |    40     |    26       |
- +-----------+-------+-----------+-------------+
- |     7     | dly1  |    30     |    35       |
- +-----------+-------+-----------+-------------+
- |     8     ! dly1  |    20     |    54       |
- +-----------+-------+-----------+-------------+
-
+    +-----------+-------+-----------+-------------+
+    | set new_  | var-  |  milli-   | morse speed |
+    | speed_idx | iable |  sonds    | (wpm)       |
+    +-----------+-------+-----------+-------------+
+    |     0     | dly1  |   100     |    10       |
+    +-----------+-------+-----------+-------------+
+    |     1     | dly1  |    90     |    12       |
+    +-----------+-------+-----------+-------------+
+    |     2     | dly1  |    80     |    13       |
+    +-----------+-------+-----------+-------------+
+    |     3     | dly1  |    70     |    15       |
+    +-----------+-------+-----------+-------------+
+    |     4     | dly1  |    60     |    17       |  <<== default
+    +-----------+-------+-----------+-------------+
+    |     5     | dly1  |    50     |    18       |
+    +-----------+-------+-----------+-------------+
+    |     6     | dly1  |    40     |    26       |
+    +-----------+-------+-----------+-------------+
+    |     7     | dly1  |    30     |    35       |
+    +-----------+-------+-----------+-------------+
+    |     8     ! dly1  |    20     |    54       |
+    +-----------+-------+-----------+-------------+
 ```
-
-
+```
 Other serial monitor output:
 
 After a reset the following text will be shown on the Serial Monitor output of the M5Echo:
@@ -409,7 +416,7 @@ loop(): ESP.getFreeHeap = 302240
 
 ```
 
-FLASHING NOTE
+## FLASHING NOTE
 
 If you use the Arduino IDE v2 take note of my recent experience. A few days ago, when starting up the Arduino IDE v2.3.4,
 it presented me a notice that there was an upgrade for the IDE to version v2.3.5 available. I accepted to install the upgrade.
@@ -421,7 +428,7 @@ After I flashed the sketch again to the M5Echo, the sketch ran flawlessly.
 Note also that for the M5Atom Echo to executed the flashed sketch without error, in the Arduino v2.3.5, BOARDS MANAGER, one needs to 
 install M5STACK v2.1.4 (and not v3.x.x because that will result in runtime errors).
 
-DESCRIPTION DEFAULT MORSE SPEED TEST ("paris ")
+## DESCRIPTION DEFAULT MORSE SPEED TEST ("paris ")
 
 During one minute the word "paris " repeatedly will be send in morse code.
 At the end of the test, the number of times the word "paris " was sent will be printed.
@@ -442,28 +449,25 @@ And the global variable: ```tone_dash.time_ms``` is derived from the value of ``
 ```tone_dash.time_ms = 3 * tone_dot.time_ms```. (see the function: ```set_speed()```)
 
 
-
-Docs:
-
+## Docs
 
 Text files containing Arduino Monitor Output texts.
 
-
-Images: 
+## Images
 
 Images, are in the folder: ```images```.
 This folder contains images of the hardware setup and images of I2C traffic "catched" with an oscilloscope.
 I added comments/explanation to some of the oscillograms.
 
 
-Links to product pages of the hardware used:
+## Links to product pages of the hardware used:
 
 - M5Stack M5Cardputer [info](https://shop.m5stack.com/products/atom-echo-smart-speaker-dev-kit?variant=34577853415588);
 - M5Stack M5Echo [info](https://shop.m5stack.com/products/atom-echo-smart-speaker-dev-kit?variant=34577853415588) or:
 - M5Stack M5Echo (seller in Portugal) [info](https://mauser.pt/catalog/product_info.php?products_id=096-8697);
 - M5Stack Grove hub [info](https://shop.m5stack.com/products/mini-hub-module)
 
-For Version_2:
+## For Version_2
 - M5Stack mini dualbutton unit [info](https://shop.m5stack.com/products/mini-dual-button-unit)
 
 Links to product accessories of the hardwar used:
@@ -473,8 +477,7 @@ Links to product accessories of the hardwar used:
 - Seeed studio Grove 4 pin Mal jumper to Grove 4 pin Conversion cable (5 Pcs Pack)
   [info](https://www.seeedstudio.com/Grove-4-pin-Male-Jumper-to-Grove-4-pin-Conversion-Cable-5-PCs-per-Pack.html)
 
-
-Known Issues:
+## Known Issues
 
 The current software on the master and the slave devices runs OK. ToDo: investigate how the audio impulses can be changed in such a way that the
 resulting audio of the morse code does appear less "staccato" (rigid).
@@ -484,7 +487,7 @@ created an global array of integer values: ```const int tone_time_lst[] =   {200
 will be used in function ```set_speed()``` to change the value of  ```tone_dot.time_ms```, 
 from which are derived the values of other global variables (see the explanation about morse speed test above).
 
-Update 2025-04-08:
+## Update 2025-04-08
 
 The volume control for the M5Atom Echo is completely changed. The function setVolume in the AtomEchoSPKR driver that I created long before this project,
 did not work. During some experiments, I discovered that changing the value of the item ".maxval" of the four structures: tone_dat, tone_dash, btn_tone1 and btn_tone2,
@@ -495,17 +498,19 @@ When the volume index is zero there is no sound ouput from the M5Atom Echo speak
 the speaker, be it very weak. That was exact my intention because there can be situations that one cannot make loud noises. With this update I also uploaded a new Monitor_output.txt 
 file that shows the new remote volume control functionality.
 
-Update 2025-11-16:
+## Update 2025-11-16
 
-Created Version_2. 
-Functionalities added in the master device:
+Created Version_2.
+
+### Functionalities added in the master device
 ```
-  - to use GROVE PORT-A of the M5Cardputer for both I2C communication as to read status of the buttons of a Dualbutton unit;
+  - to use GROVE PORT-A of the M5Cardputer for both I2C communication as to read status of the buttons of a mini dualbutton unit;
   - to blink the build-in RGB LED of the StampS3 microcontroller inserted in the M5Cardputer.;
   - text feedback on the bottom text line of the display of the M5Cardputer, for example: "MORSE GO" and "MORSE END";
   - to put to sleep and to awake the display of the M5Cardputer.
+```
 
-master device new functions:
+### master device new functions
 ```
   setPins(), 
   disp_feedback()
@@ -515,7 +520,7 @@ master device new functions:
   set_led()
 ```
 
-master device modified functions:
+### master device modified functions
 ```
   disp_commands()
   handle_kbd_input()
