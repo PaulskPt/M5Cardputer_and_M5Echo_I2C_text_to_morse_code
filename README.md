@@ -531,7 +531,7 @@ Created version_2.
 ```
 
 ### MS Copilot analysis and system diagram description
-[text]()
+[text](https://github.com/PaulskPt/M5Cardputer_and_M5Echo_I2C_text_to_morse_code/blob/main/docs/2025-11-16_20h00_MS_Copilot_analysis_summary_and_diagram.txt)
 
 ### MS Copilot system diagram
 [image](https://github.com/PaulskPt/M5Cardputer_and_M5Echo_I2C_text_to_morse_code/blob/main/images/2025-11-16_20h14_System_Diagram.png)
