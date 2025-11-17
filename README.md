@@ -127,7 +127,7 @@ morse code audio through its loudspeaker. In this moment there are the following
   
 Upon start (or reset) the Arduino sketch running on either the master or the slave device
 will load certain definitions from the #include file: "puter_echo.h" which is present in the 
-subfolers "master" and "slave".
+subfolders "master" and "slave".
 
 ### MESSAGE CONSTRUCTION
 
@@ -181,7 +181,7 @@ send a command type of message, containing the command you entered, to the M5Ech
 very rapid. On the oscillograms one can see that an I2C command type of message only contains 6 bytes.
 Sending this command message packet takes only 13 x 50 = 650 microseconds! (see the oscillograms).
 
-In version_2 first will be shown a list of available commands. After a delay of 5 seconds, the text of Version_1 (above) will be shown.
+In Version_2 first will be shown a list of available commands. After a delay of 5 seconds, the text of Version_1 (above) will be shown.
 
 After a reset the following text will be shown on the Serial Monitor output of the M5Cardputer:
 
@@ -222,7 +222,7 @@ setup(): Successfully connected onto I2C bus nr: 0.
    +-----------------+--------+
    | word space      |    7   |
    +---------------.-+--------+
-```
+
          The length of the word "paris" in morse code units (see table above) is: 
          0             1               2               3               4             5
          1 2 345 6 789 0 1 234 5 6 789 012 3 4 567 8 9 012 2 4 5 678 9 0 1 2 3 4567890 
@@ -270,7 +270,7 @@ from ASCII to code to send morse dots and dashes.
   };
 ```
 
-In this table the array after each character value, for exaple in:
+In this table the array after each character value, for example in:
 
 ```
      {'1', {1,2,2,2,2}}, a "1" represents a morse code "dot" and a "2" represents a "dash". 
@@ -377,7 +377,7 @@ The table below show the arbitrary measured speeds.
     |     8     ! dly1  |    20     |    54       |
     +-----------+-------+-----------+-------------+
 ```
-```
+
 Other serial monitor output:
 
 After a reset the following text will be shown on the Serial Monitor output of the M5Echo:
@@ -505,7 +505,7 @@ Created Version_2.
 ### Functionalities added in the master device
 ```
   - to use GROVE PORT-A of the M5Cardputer for both I2C communication as to read status of the buttons of a mini dualbutton unit;
-  - to blink the build-in RGB LED of the StampS3 microcontroller inserted in the M5Cardputer.;
+  - to blink the built-in RGB LED of the StampS3 microcontroller inserted in the M5Cardputer;
   - text feedback on the bottom text line of the display of the M5Cardputer, for example: "MORSE GO" and "MORSE END";
   - to put to sleep and to awake the display of the M5Cardputer.
 ```
