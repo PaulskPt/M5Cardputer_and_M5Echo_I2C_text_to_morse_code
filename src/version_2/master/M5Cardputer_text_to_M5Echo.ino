@@ -32,10 +32,10 @@
 * M5Stack dualbutton unit example: https://github.com/m5stack/M5Stack/tree/master/examples/Unit/DUAL_BUTTON
 *
 * Update: 2025-11-16: added functionality to use GROVE PORT-A of the M5Cardputer for both I2C communication
-*          as to read status of the buttons of a M5Stack Dualbutton unit. For this the function setPins() was created.
-*  Update: 2025-11-17: in handle_kbd_input(): 
-*                      a) if display is sleeping, wake it up on keypress, do not process the key further;
-*                      b) added debounce filtering.
+          as to read status of the buttons of a M5Stack Dualbutton unit. For this the function setPins() was created.
+* Update: 2025-11-17: in handle_kbd_input(): 
+*                     a) if display is sleeping, wake it up on keypress, do not process the key further;
+*                     b) added debounce filtering.
 */
 
 /**
@@ -83,15 +83,31 @@ unsigned long rainbowStart = 0;
 #define LED_RAINBOW 0
 #define LED_RED     1
 #define LED_GREEN   2
-#define LED_BLUE    3
-#define LED_CYAN    4
-#define LED_WHITE   5
-#define LED_OFF     6
+#define LED_YELLOW  3
+#define LED_BLUE    4
+#define LED_CYAN    5
+#define LED_WHITE   6
+#define LED_OFF     7
 
 // #define USE_M5STACK_EXAMPLE  // see handle_rx()
 
+//#ifdef MY_DEBUG
+//#undef MY_DEBUG
+//#endif
+
+#ifndef MY_DEBUG
+#define MY_DEBUG
+#endif
+
+// Define print macros
 #ifdef MY_DEBUG
-#undef MY_DEBUG
+  #define DEBUG_PRINT(x)       Serial.print(x)
+  #define DEBUG_PRINTLN(x)     Serial.println(x)
+  #define DEBUG_PRINTF(...)    serialPrintf(__VA_ARGS__)
+#else
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
+  #define DEBUG_PRINTF(...)
 #endif
 
 #ifndef ARDUINO_M5STACK_CARDPUTER
@@ -185,6 +201,27 @@ unsigned long curr_t = 0;
 unsigned long timeout_limit_t = 2000; // timeout = 2 seconds
 unsigned long elapsed_t = 0;
 
+// Default version for most use cases (160-byte buffer)
+void serialPrintf(const char* format, ...) {
+  char buffer[160];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, sizeof(buffer), format, args);
+  va_end(args);
+  Serial.print(buffer);
+}
+
+// Extended version where you can specify buffer size
+// (= Function Overloading!)
+void serialPrintf(size_t bufferLen, const char* format, ...) {
+  char buffer[bufferLen];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, bufferLen, format, args);
+  va_end(args);
+  Serial.print(buffer);
+}
+
 bool create_rx_buffer() {
   static constexpr const char txt0[] PROGMEM = "create_rx_buffer(): ";
   bool ret = false;
@@ -264,12 +301,10 @@ bool setPins(bool for_i2c = true) {
 #endif
   }
 
-#ifdef MY_DEBUG
-  Serial.print(F("setPins(): result = "));
-  Serial.println(result ? F("true") : F("false"));
-  Serial.print(F("Mode = "));
-  Serial.println(pinsSetForI2C ? F("I2C") : F("Buttons"));
-#endif
+  DEBUG_PRINT(F("setPins(): result = "));
+  DEBUG_PRINTLN(result ? F("true") : F("false"));
+  DEBUG_PRINT(F("Mode = "));
+  DEBUG_PRINTLN(pinsSetForI2C ? F("I2C") : F("Buttons"));
 
   return result;
 }
@@ -508,12 +543,12 @@ void send_text_msg() {
   Serial.print(txt0);
   Serial.print(F("New TXpacketNr = "));
   Serial.println(TXpacketNr);
-#ifndef MY_DEBUG
-  Serial.print(txt0);
-  Serial.print(F("String data  = \""));
-  Serial.print(data);
-  Serial.println(F("\""));
-#endif
+
+  DEBUG_PRINT(txt0);
+  DEBUG_PRINT(F("String data  = \""));
+  DEBUG_PRINT(data);
+  DEBUG_PRINTLN(F("\""));
+
   uint8_t le_data = data.length();
   uint8_t le_message;
   uint8_t le_packet;
@@ -537,16 +572,15 @@ void send_text_msg() {
   message[le_packet] = '\0'; // end of string marker
   le_packet++; // include the '\0' byte
 
-#ifdef MY_DEBUG
+
   //Serial.printf("le_data = %d\n", le_data);
   //Serial.print(txt0);
   //Serial.printf("le_packet = %d\n", le_packet); // this le_packet, in this moment, excludes the '\0' byte
   for (j = 0; j < le_packet; j++) {
-    Serial.print(txt0);
-    Serial.printf("message[%d] = '0x%02x' ('%c')\n", j, message[j], message[j]);
+    DEBUG_PRINT(txt0);
+    DEBUG_PRINTF("message[%d] = '0x%02x' ('%c')\n", j, message[j], message[j]);
   }
-#endif
-  
+
   le_message=sizeof(message)/sizeof(message[0]);
   
   String s;
@@ -602,142 +636,6 @@ void send_text_msg() {
   }
   //free(message);
  }
-
- /*
- void send_cmd(uint8_t cmd_idx) {
-  static constexpr const char txt0[] PROGMEM = "send_cmd(): ";
-  static constexpr const char *txts[] PROGMEM = {
-    "sending ",       // 0
-    "command ",       // 1
-    "message",        // 2
-    "bytes ",         // 3
-    "sent",           // 4
-    "Number of ",     // 5
-    "Going to ",      // 6
-    "send "           // 7
-  };
-  TXpacketNr++;
-  uint8_t le_cmd_msg;
-  uint8_t le_message;
-  uint8_t *message;
-  uint8_t message_bufferSize = 6;
-  String s1;
-  String s2;
-
-  if (my_debug) {
-    Serial.print(txt0);
-    Serial.printf("param cmd_idx = %d\n", cmd_idx);
-  }
-
-  message = NULL;
-  message = (uint8_t *)malloc(message_bufferSize);
-  if (message == NULL) {
-    Serial.print(txt0);
-    Serial.println(F("Can't allocate memory for cmd msg"));
-    return;
-  }
-
-  message[0] = I2C_DEV_ADDR;
-  message[1] = (TXpacketNr & 0xFF00) >> 8; // put MSB of uint16_t
-  message[2] = TXpacketNr & 0xFF; // put LSB of uint16_t
-  message[3] = cmd_idx;
-
-  uint8_t le_cmd_arr = sizeof(cmd_idx_arr) / sizeof(cmd_idx_arr[0]);
-  if (my_debug) {
-    Serial.print(txt0);
-    Serial.print(F("le_cmd_arr = "));
-  }
-  uint8_t tmp_idx = cmd_idx - CMD_DO_NOTHING;
-
-  if (tmp_idx >= le_cmd_arr) {
-    Serial.print(txt0);
-    Serial.print(F("Error: tmp_idx is out of bounds! tmp_idx = "));
-    Serial.print(tmp_idx);
-    Serial.println(F(". Exiting function."));
-    return;
-  }
-  else { // (cmd_idx >= CMD_DO_NOTHING && tmp_idx < le_cmd_arr) {
-    if (my_debug) {
-      Serial.printf("tmp_idx = %d = \"%s\"\n", tmp_idx, cmd_idx_arr[tmp_idx]);
-    }
-
-    // Debug addition advised by Ms Copilot
-    //Serial.print(txt0);
-    //Serial.printf("Memory address of cmd_idx_arr[%d]: %p\n", tmp_idx, cmd_idx_arr[tmp_idx]);
-    
-    // end of addition
-
-    char buffer[cmd_idx_arr_elem_size] = {0};  // Initialize with zeros
-    strncpy(buffer, cmd_idx_arr[tmp_idx], cmd_idx_arr_elem_size - 1);
-    s1 = buffer;
-    //s1 = "CMD_VOLUME_CHG";  // Hardcoded for testing
-
-
-    if ((cmd_idx == CMD_DO_NOTHING) || (cmd_idx == CMD_RESET) || \
-      (cmd_idx == CMD_MORSE_GO) || (cmd_idx == CMD_MORSE_END) || (cmd_idx == CMD_VOLUME_CHG)) {
-      message[4] = NO_DATA;
-    } else {
-      message[4] = CMD_IDX_TODO;
-    }
-  }
-  message[5] = '\0';
-  le_message=6; // was: =sizeof(message)/sizeof(message[0]) + 1;
-
-  if (message[4] == NO_DATA)
-    s2 = "NO_DATA";
-  else if (message[4] == CMD_IDX_TODO)
-    s2 = "CMD_IDX_TODO";
-  else
-    s2 = "";
-  
-  Serial.print(txt0);
-  Serial.printf("I2C_DEV_ADDR = 0x%02x, TXpacketNr = %u, cmd = \"%s\", data = \"%s\"\n", 
-    message[0], ((message[1] << 8) | message[2]), s1.c_str(), s2);
-
-  if (my_debug) {
-    Serial.print(txt0);
-    Serial.print(F("length of message = "));
-    Serial.printf("%d\n", le_message);
-  }
-
-  Serial.print(txt0);
-  Serial.printf("%s%s%s%s: ", txts[6], txts[7], txts[1], txts[2]);
-  uint8_t i; 
-  for (i = 0; message[i] != '\0'; i++) {
-    Serial.printf("0x%02x", message[i]);
-    if (i < le_message-1)
-      Serial.print(", ");
-  }
-  Serial.printf("0x%02x\n", message[i]);  // Print the NULL terminator
-  size_t bytes_sent = 0;
-
-  // Advised by MS Copilot: print all elements of the array
-  // See the %p in the printf(), that's a way to print the memory address of the array element(s)!
-  
-  //Serial.println(txt0);
-  //for (int i = 0; i < sizeof(cmd_idx_arr) / sizeof(cmd_idx_arr[0]); i++) {
-  //  Serial.printf("cmd_idx_arr[%d] address: %p, value: %s\n", i, cmd_idx_arr[i], cmd_idx_arr[i]);
-  //}
-  
-  // end of addition
-
-  setPins(); // set I2C pins
-  Wire.beginTransmission(I2C_DEV_ADDR);
-  bytes_sent = Wire.write((uint8_t *)message, le_message);
-  Wire.endTransmission(true);
-  Serial.print(txt0);
-  if (bytes_sent > 0) {
-    Serial.printf("%s%s %s. %s%s%s: %d\n",
-      txts[1], txts[2], txts[4],
-      txts[5], txts[3], txts[4],
-      bytes_sent);
-  } else {
-    Serial.printf("%s%s%s", txts[0], txts[1], txts[2]);
-    Serial.println(F(" to slave failed."));
-  }
-  free(message);
-}
-*/
 
 void send_cmd(uint8_t cmd_idx) {
   static constexpr const char txt0[] PROGMEM = "send_cmd(): ";
@@ -959,22 +857,30 @@ void handle_kbd_input() {
         Serial.println("Display woke up on keypress.");
         return; // consume this keypress
       }
-#ifndef MY_DEBUG
+      led_status = LED_YELLOW;
+      set_led();
+
       std::string wordStr(status.word.begin(), status.word.end());
-      Serial.printf("%sstatus.word = \"%s\"\n", txt0, wordStr.c_str());
-#endif
+      DEBUG_PRINTF("%sstatus.word = \"%s\"\n", txt0, wordStr.c_str());
+
       // --- Auto-debounce layer ---
       for (auto i : status.word) {
         unsigned long now = millis();
 
-        // Auto-debounce: ignore if same key pressed too quickly OR same as last buffer char
-        if ((i == lastKey && (now - lastKeyTime) < debounceDelay) ||
-            (data.length() > 2 && i == data[data.length() - 1])) {
-          Serial.printf("%sBounce ignored: '%c'\n", txt0, i);
+        // Case 1: timing-based bounce suppression
+        if (i == lastKey && (now - lastKeyTime) < debounceDelay) {
+          Serial.printf("%sBounce ignored (timing): '%c'\n", txt0, i);
           continue;
         }
 
-        data += i; // accept key
+        // Case 2: reject consecutive spaces
+        if (i == ' ' && data.length() > 0 && data.charAt(data.length() - 1) == ' ') {
+          Serial.printf("%sIgnored double space\n", txt0);
+          continue;
+        }
+
+        // Accept key
+        data += i;
         lastKey = i;
         lastKeyTime = now;
       }
@@ -1064,11 +970,9 @@ void handle_kbd_input() {
               decrease_pressed = true;
               speed_idx -= 1;
               blinkFeedback(CMD_SPEED_CHG);
-              if (my_debug) {
-                Serial.print(txt0);
-                Serial.print(F("speed_idx < SPEED_IDX_MINIMUM ? "));
-                Serial.printf("%s\n", (speed_idx < SPEED_IDX_MINIMUM) ? "true" : "false");
-              }
+              DEBUG_PRINT(txt0);
+              DEBUG_PRINT(F("speed_idx < SPEED_IDX_MINIMUM ? "));
+              DEBUG_PRINTF("%s\n", (speed_idx < SPEED_IDX_MINIMUM) ? "true" : "false");
               if (speed_idx < SPEED_IDX_MINIMUM)
                 speed_idx = SPEED_IDX_MINIMUM;
               brk2 = true;
@@ -1077,11 +981,9 @@ void handle_kbd_input() {
               increase_pressed = true;
               speed_idx += 1;
               blinkFeedback(CMD_SPEED_CHG);
-              if (my_debug) {
-                Serial.print(txt0);
-                Serial.print(F("speed_idx >= SPEED_IDX_MAXIMUM ? "));
-                Serial.printf("%s\n", (speed_idx >= SPEED_IDX_MAXIMUM) ? "true" : "false");
-              }
+              DEBUG_PRINT(txt0);
+              DEBUG_PRINT(F("speed_idx >= SPEED_IDX_MAXIMUM ? "));
+              DEBUG_PRINTF("%s\n", (speed_idx >= SPEED_IDX_MAXIMUM) ? "true" : "false");
               if (speed_idx >= SPEED_IDX_MAXIMUM)
                 speed_idx = SPEED_IDX_MAXIMUM;
               brk2 = true;
@@ -1098,6 +1000,8 @@ void handle_kbd_input() {
         if (show_commands_flag) show_commands_flag = false;
         delay(500); // debounce delay for control keys
       }
+      led_status = LED_OFF;
+      set_led();
     }
   }
 }
@@ -1113,6 +1017,9 @@ void set_led() {
         break;
     case LED_GREEN:
         leds[0] = CRGB::Green;
+        break;
+    case LED_YELLOW:
+        leds[0] = CRGB::Yellow;
         break;
     case LED_BLUE:
         leds[0] = CRGB::Blue;

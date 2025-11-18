@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-bool my_debug = false;
+//bool my_debug = false;
 
 uint8_t i2c_bus_num = 0;
 
