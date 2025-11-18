@@ -539,3 +539,9 @@ Created version_2.
 
 ### Master and Slave monitor output side-by-side
 [image](https://github.com/PaulskPt/M5Cardputer_and_M5Echo_I2C_text_to_morse_code/blob/main/images/20251117_2017_M5Cardputer_and_M5Echo_output_side-by-side.png)
+
+### Master sketch outline
+[master outline](https://github.com/PaulskPt/M5Cardputer_and_M5Echo_I2C_text_to_morse_code/blob/main/images/Master_sketch_outline.png)
+
+### Salve sketch outline
+[slave outline](https://github.com/PaulskPt/M5Cardputer_and_M5Echo_I2C_text_to_morse_code/blob/main/images/Slave_sketch_outline.png)
