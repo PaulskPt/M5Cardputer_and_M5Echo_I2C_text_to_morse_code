@@ -54,8 +54,36 @@
   Deprecated — Use M5GFX & M5Unified
 */
 
-#ifndef MY_DEBUG
-#define MY_DEBUG
+#ifdef MY_DEBUG
+#undef MY_DEBUG
+#endif
+
+#ifndef MORSE_DEBUG
+#define MORSE_DEBUG
+#endif
+
+#ifdef MORSE_TEXT_DEBUG
+#undef MORSE_TEXT_DEBUG
+#endif
+
+#ifdef MORSE_TEXT_DEBUG
+  #define DEBUG_MORSE_TEXT_PRINT(x)       Serial.print(x)
+  #define DEBUG_MORSE_TEXT_PRINTLN(x)     Serial.println(x)
+  #define DEBUG_MORSE_TEXT_PRINTF(...)    serialPrintf(__VA_ARGS__)
+#else
+  #define DEBUG_MORSE_TEXT_PRINT(x)
+  #define DEBUG_MORSE_TEXT_PRINTLN(x)
+  #define DEBUG_MORSE_TEXT_PRINTF(...)
+#endif
+
+#ifdef MORSE_DEBUG
+  #define DEBUG_MORSE_PRINT(x)       Serial.print(x)
+  #define DEBUG_MORSE_PRINTLN(x)     Serial.println(x)
+  #define DEBUG_MORSE_PRINTF(...)    serialPrintf(__VA_ARGS__)
+#else
+  #define DEBUG_MORSE_PRINT(x)
+  #define DEBUG_MORSE_PRINTLN(x)
+  #define DEBUG_MORSE_PRINTF(...)
 #endif
 
 // Define print macros
@@ -130,7 +158,7 @@ uint8_t *rx_buffer;
 uint8_t *cw_buffer;
 int8_t rx_buffer_howMany = 0;
 int rx_buffer_idx = 0;
-int cw_buffer_idx = 0;
+int cw_buffer_size = 0;
 bool I2C_active = false;
 bool receiveFlag = false;
 bool rcvd_cmd_flag = false;
@@ -221,7 +249,7 @@ void freeCWBuffer() {
   if (cw_buffer != NULL) {
     free(cw_buffer);
     cw_buffer = NULL;
-    cw_buffer_idx = 0;
+    cw_buffer_size = 0;
   }
 }
 
@@ -510,26 +538,26 @@ bool cpyRXtoCW() {
         return false;
       }
     }
-    cw_buffer_idx = rx_buffer_idx;  // copy index value
-    if (cw_buffer_idx > 0) {
+    cw_buffer_size = rx_buffer_idx;  // copy index value
+    if (cw_buffer_size > 0) {
       if (rx_buffer && cw_buffer) {
         memcpy(cw_buffer, rx_buffer, cw_bufferSize);  // Copies rx_buffer to cw_buffer
-        size_t cw_buffer_idx = calcCWbufferLen();
+        size_t cw_buffer_size = calcCWbufferLen();
         Serial.print(txt0);
         Serial.println(F("RX_buffer copied to CW_buffer"));
         Serial.print(txt0);
         Serial.print(F("contents of cw_buffer = "));
-        Serial.printf("\"%.*s\"\n", cw_buffer_idx, (char *)&cw_buffer[4]);
+        Serial.printf("\"%.*s\"\n", cw_buffer_size, (char *)&cw_buffer[4]);
         Serial.print(txt0);
         Serial.print(F("in bytes = "));
-        for (uint8_t i = 0; i < cw_buffer_idx; i++) {
+        for (uint8_t i = 0; i < cw_buffer_size; i++) {
           Serial.printf("0x%02x ", cw_buffer[i]);
         }
         Serial.println();
 
         Serial.print(txt0);
         Serial.print(F("size cw_buffer = "));
-        Serial.println(cw_buffer_idx);
+        Serial.println(cw_buffer_size);
       } else
         ret = false;
     }
@@ -587,22 +615,22 @@ void btn_beep() {
   LedColor(RED);
 }
 
-bool isEndOfBuffer(int i, int cw_buffer_idx) {
-    return (i + 1 == cw_buffer_idx);
+bool isEndOfBuffer(int i, int cw_buffer_size) {
+    return (i + 1 == cw_buffer_size);
 }
 
-bool isWordEnd(int i, int cw_buffer_idx, uint8_t* cw_buffer) {
-    return (i + 1 < cw_buffer_idx && cw_buffer[i + 1] == ' ');
+bool isWordEnd(int i, int cw_buffer_size, uint8_t* cw_buffer) {
+    return (i + 1 < cw_buffer_size && cw_buffer[i + 1] == ' ');
 }
 
 void send_morse() {
   // Define variables:
   static constexpr const char txt0[] PROGMEM = "send_morse(): ";
-  std::vector<int> lst;  // create an empty list
+  std::vector<int> morse_char_lst;  // create an empty list
   int i;
   int j;
   //int le;  // Was: length of cw_buffer ? but never used
-  int le2;
+  int morse_char_lst_size;
   int n;
   int n2;
   int cw_buffer_char_cnt;
@@ -638,47 +666,46 @@ void send_morse() {
   Serial.printf("tone_dash.modal = %s\n", (tone_dash.modal == 1) ? "true" : "false");
   dot_dash_time();
 
-  if (!cmd_morse_go_flag && receiveFlag && cw_buffer_idx > 0) {
+  if (!cmd_morse_go_flag && receiveFlag && cw_buffer_size > 0) {
     Serial.print(txt0);
-    Serial.print(F("cw_buffer_idx = "));
-    Serial.println(cw_buffer_idx);
+    Serial.print(F("cw_buffer_size = "));
+    Serial.println(cw_buffer_size);
     morse_default = false;
     text_begin_idx = 4;
     cw_buffer_char_cnt = 0;
     Serial.print(F("Text to send:\nin morse code = "));
-    Serial.printf("\"%.*s\"", cw_buffer_idx - 1, (char *)&cw_buffer[text_begin_idx]);
+    Serial.printf("\"%.*s\"", cw_buffer_size - 1, (char *)&cw_buffer[text_begin_idx]);
     Serial.print(F(", length = "));
-    Serial.printf("%d\n", cw_buffer_idx - text_begin_idx - 1);
+    Serial.printf("%d\n", cw_buffer_size - text_begin_idx - 1);
     
     DEBUG_PRINT(F("in bytes = "));
-    for (i = 4; i < cw_buffer_idx - 1; i++) {
+    for (i = 4; i < cw_buffer_size - 1; i++) {
       DEBUG_PRINTF("0x%02x ", cw_buffer[i]);
     }
     DEBUG_PRINTLN();
-    
     
     DEBUG_PRINTLN(F("Sending..."));
   } else {  // if cmd_morse_go_flag is active
     // use default "paris"
     morse_default = true;
     text_begin_idx = 0;
-    const char tmp[] = "paris ";
-    cw_buffer_idx = strlen(tmp);  // was: tmp.length()+1; // +1 for null terminator
+    const char tmp[] = "paris";
+    cw_buffer_size = strlen(tmp);  // was: tmp.length()+1; // +1 for null terminator
     Serial.print(txt0);
     Serial.print(F("going to send \""));
     Serial.print(tmp);
     Serial.print(F("\", length = "));
-    Serial.println(cw_buffer_idx);
+    Serial.println(cw_buffer_size);
     if (cw_buffer == NULL)
       if (!create_cw_buffer())
         return;
-    for (i = 0; i < cw_buffer_idx; i++) {
+    for (i = 0; i < cw_buffer_size; i++) {
       cw_buffer[i] = static_cast<uint8_t>(tmp[i]);
     }
-    cw_buffer[i] = 0;  // was: '\0' null terminator
+    //cw_buffer[i] = 0;  // was: '\0' null terminator
     Serial.print(txt0);
     Serial.print(F("contents cw_buffer = "));
-    Serial.printf("\"%.*s\"\n", cw_buffer_idx, (char *)&cw_buffer[0]);
+    Serial.printf("\"%.*s\"\n", cw_buffer_size, (char *)&cw_buffer[0]);
   }
   
   DEBUG_PRINTLN(F("Going to send the text now..."));
@@ -686,6 +713,7 @@ void send_morse() {
   show_delays();
   morse_start_t = millis();
   while (true) {
+    int char_sent_count = 0;
     curr_t = millis();
     elapsed_t = curr_t - morse_start_t;
     if (elapsed_t >= interval_t) {
@@ -696,7 +724,10 @@ void send_morse() {
     if (cw_buffer == NULL)
       return;
     Serial.printf("%2d) ", word_count + 1);
-    for (i = text_begin_idx; i < cw_buffer_idx; i++) {
+    // ----------------------------------------------------------
+    // -------- Send the text in cw_buffer as morse code --------
+    // ----------------------------------------------------------
+    for (i = text_begin_idx; i < cw_buffer_size; i++) {
       if (M5.Btn.wasPressed()) {
         Serial.println();
         Serial.print(txt0);
@@ -722,18 +753,19 @@ void send_morse() {
         }
       }
 
-      if (isEndOfBuffer(i, cw_buffer_idx)) {
-          all_characters_sent = true;
-      } else if (isWordEnd(i, cw_buffer_idx, cw_buffer)) {
-          word_end = true;
-      }
+      //if (isEndOfBuffer(i, cw_buffer_size)) {
+      //    all_characters_sent = true;
+      //} else if (isWordEnd(i, cw_buffer_size, cw_buffer)) {
+      //    word_end = true;
+      //}
 
       c = cw_buffer[i];
       n = static_cast<int>(c);  // Calculate the ASCII value
       if (n == 0)               // string terminator. Exit for loop.
         break;
-      if (n == 32) {
-        DEBUG_PRINTLN(F("word space delay: |  7  |\n"));
+      if (isWordEnd(i, cw_buffer_size, cw_buffer)) { // (n == 32) {
+        DEBUG_MORSE_TEXT_PRINT(F("word space delay:"));
+        DEBUG_MORSE_PRINT("|  7  |\n");
         delay(dly7);
         unit_count += 7;
       } else {
@@ -753,31 +785,35 @@ void send_morse() {
           c2 = '?';  // use ? as replacement for character received and not found in dictionary.
         } else {
           // Extract the list and assign it to a variable
-          lst = morse_txt_dict[c2];
+          morse_char_lst = morse_txt_dict[c2];
           DEBUG_PRINT(F("Sending character "));
           DEBUG_PRINT(c2);
           DEBUG_PRINT(F(" = "));
           // Calculate the length of the extracted list
-          size_t le2 = lst.size();
-          if (le2 > 0) {
+          morse_char_lst_size = morse_char_lst.size();
+          if (morse_char_lst_size > 0) {
+            char_sent_count += 1;
             DEBUG_PRINT("[");
-            for (int n = 0; n < le2; n++) {
-              DEBUG_PRINT(lst[n]);
-              if (n < le2 - 1) {
+            // Print the extracted morse code list, for example: [1,2] for character 'a'
+            for (j = 0; j < morse_char_lst_size; j++) {
+              DEBUG_PRINT(morse_char_lst[j]);
+              if (j < morse_char_lst_size - 1) {
                 DEBUG_PRINT(", ");
               }
             }
             DEBUG_PRINTLN("]");
-            
-            for (j = 0; j < le2; j++) {
-              if (lst[j] == 2) {
-                DEBUG_PRINTLN(F("Sending a dash: ---"));
+            // Now send the dots and dashes OF THIS CHARACTER
+            for (j = 0; j < morse_char_lst_size; j++) {
+              if (morse_char_lst[j] == 2) {
+                DEBUG_MORSE_TEXT_PRINT(F("Sending a dash: "));
+                DEBUG_MORSE_PRINT("---");
                 //Serial.printf("tone_dash.modal = %d\n", tone_dash.modal);
                 unit_count += 3;
                 writeSize = echoSPKR.playBeep(tone_dash);
                 //writeSize = echoSPKR.playBeep(tone_dash.freq, tone_dash.time_ms, tone_dash.maxval, tone_dash.modal);
-              } else if (lst[j] == 1) {
-                DEBUG_PRINTLN(F("Sending a dot: ."));
+              } else if (morse_char_lst[j] == 1) {
+                DEBUG_MORSE_TEXT_PRINT(F("Sending a dot: "));
+                DEBUG_MORSE_PRINT(".");
                 //Serial.printf("tone_dot.modal = %d\n", tone_dot.modal);
                 unit_count += 1;
                 writeSize = echoSPKR.playBeep(tone_dot);
@@ -789,33 +825,46 @@ void send_morse() {
               // }
               // for example: after 'e' or 't' no character space delay
               // and not after the last dot or dash of the character
-              if (le2 > 1 && j < le2 - 1) {
+              if (morse_char_lst_size > 1 && j < morse_char_lst_size - 1) {
 #ifdef SHOW_UNITS
-                DEBUG_PRINTLN(F("unit space delay: |1|")); 
+                DEBUG_MORSE_TEXT_PRINT(F("unit space delay: "));
+                DEBUG_MORSE_PRINT("|1|"); 
 #else
-                DEBUG_PRINTLN(F("unit space delay \" \""));
+                //DEBUG_PRINT(F("unit space delay "));
+                DEBUG_MORSE_PRINTLN("\" \"");
 #endif
                 delay(dly1);  // was: (dly1)
                 unit_count += 1;
               }
+            }  // end-of-for-loop (j < morse_char_lst_size)
+
+            //if (i == morse_char_lst_size - 1) { // end of buffer reached
+            if (cmd_morse_go_flag && char_sent_count  == (cw_buffer_size - text_begin_idx) ||
+               !cmd_morse_go_flag && char_sent_count +1 == (cw_buffer_size - text_begin_idx)) {
+                all_characters_sent = true;
+                break;
+            } else if (isWordEnd(i, cw_buffer_size, cw_buffer)) {
+                word_end = true;
             }
-            if (i == le2 - 1) { // was: (i == le - 1) {   however i was never set
-              DEBUG_PRINTLN(F("word space delay: |   7   |"));
+            //Serial.printf("char_sent_count +1 = %d, cw_buffer_size - text_begin_idx = %d\n", char_sent_count+1, cw_buffer_size - text_begin_idx);
+            if (word_end) {
+              DEBUG_MORSE_TEXT_PRINT(F("word space delay: "));
+              DEBUG_MORSE_PRINT("|   7   |");
               delay(dly7);
               unit_count += 7;
-            } else {
-              if (!word_end) {
-                DEBUG_PRINTLN(F("character space delay: | 3 |"));
-                delay(dly3);
-                unit_count += 3;
-              } else
-                word_end = false;
+              word_end = false;
+            } else  { // +1 for the 0 terminator
+              DEBUG_MORSE_TEXT_PRINT(F("character space delay: "));
+              DEBUG_MORSE_PRINT("| 3 |");
+              delay(dly3);
+              unit_count += 3;
             }
-          }
-        }
+          }  // end-of-if (morse_char_lst_size > 0)
+        }    // end-of-else (character found in morse_txt_dict)
+        //DEBUG_MORSE_PRINTLN();  // New line after the character (morse code representation)
         M5.update();
-      }
-    }                  // end-of-for-loop
+      } // else of  (isWordEnd(i, cw_buffer_size, cw_buffer))
+    }  // end-of-for-loop (text_begin_idx; i < cw_buffer_size)
     if (all_characters_sent) {
       DEBUG_PRINTLN(F("end of buffer reached. Extra word space delay: |   7   |"));
       delay(dly7);
